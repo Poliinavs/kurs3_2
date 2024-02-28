@@ -1,0 +1,75 @@
+/*div{
+    background-color: lightgrey; 
+    margin:5px; 
+    padding: 15px; 
+    width: 20%; 
+    border: 3px solid black; 
+    border-radius:10px;
+}*/
+a {
+    text-decoration: none; /* Убираем стиль подчеркивания */
+    color: black; /* Наследуем цвет текста от родительского элемента */
+}
+#button,input #button,button, div #button{
+    padding: 5px;
+    background-color: rgb(194, 188, 188);
+    margin:5px; 
+    width: 100px;
+    border-radius:15px;
+}
+/*#button, .SendButton {
+    width: 150px; !* Укажите нужную ширину *!
+    height: 40px; !* Укажите нужную высоту *!
+    margin: 10px;
+}*/
+#container {
+    max-height: 200px; /* Задайте нужную высоту контейнера */
+    overflow-y: auto; /* Включение вертикальной прокрутки при необходимости */
+    padding: 10px; /* Отступ внутри контейнера */
+    margin: 20px;
+}
+
+#container div {
+    background-color: #f0f0f0; /* Серый фон */
+    border: 1px solid #ccc; /* Серая рамка */
+    border-radius: 10px; /* Закругленные углы */
+    padding: 10px; /* Отступ внутри каждого div */
+    margin-bottom: 10px; /* Отступ между элементами */
+}
+
+#container a {
+    text-decoration: none; /* Убираем подчеркивание у ссылок */
+    color: #333; /* Цвет текста ссылок */
+}
+
+#container a:hover {
+    background-color: #ddd; /* Серый фон при наведении на ссылку */
+}
+
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center; /* Для центрирования текста внутри элементов */
+}
+.form-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-row {
+    display: flex;
+    margin-bottom: 10px; /* Расстояние между рядами */
+}
+
+input {
+    margin-right: 10px; /* Расстояние между элементами в ряду */
+}

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<div id="get_res"></div>
+<button onclick="get()">GET</button>
+
+<form>
+    <div class="row">
+        <label class="col-2">TEACHER</label>
+        <input type="text" class="col-3" id="TEACHER"/>
+    </div>
+
+    <div class="row">
+        <label class="col-2">TEACHER_NAME</label>
+        <input type="text" class="col-3" id="TEACHER_NAME"/>
+    </div>
+
+    <div class="row">
+        <label class="col-2">PULPIT</label>
+        <input type="text" class="col-3" id="PULPIT"/>
+    </div>
+
+    <div class="row">
+        <button class="col-2"  type="button"   onclick="post()">POST</button>
+    </div>
+</form>
+
+
+<form>
+    <div>
+        <div class="row">
+            <label class="col-2">TEACHER</label>
+            <input type="text" class="col-3"  id="Teacher" />
+        </div>
+        <div class='row'>
+            <label class='col-2'>NEW TEACHER_NAME</label>
+            <input type="text" class="col-3" id="NEWTEACHER_NAME" />
+        </div>
+        <div class='row'>
+            <label class='col-2'>NEW PULPIT</label>
+            <input type="text" class='col-3' id='NEWPULPIT'/>
+        </div>
+        <div class="row">
+            <button class="col-2" onclick="put()">PUT</button>
+        </div>
+    </div>
+</form>
+
+<form>
+    <div>
+        <div class="row">
+            <label class="col-2">TEACHER</label>
+            <input type="text" class="col-3" id="teacher" min="1"/>
+        </div>
+        <div class="row">
+            <button class="col-2" onclick="DELETE()">DELETE</button>
+        </div>
+    </div>
+</form>
+<div id="error-message"></div>
+
+<script>
+    function displayErrorMessage(message) {
+        const errorMessageElement = document.getElementById('error-message');
+        errorMessageElement.textContent = `Error: ${message}`;
+    }
+
+    function ClearError() {
+        const errorMessageElement = document.getElementById('error-message');
+        errorMessageElement.textContent = ``;
+    }
+
+    function DisplaySuccess(msg){
+        const errorMessageElement = document.getElementById('error-message');
+        errorMessageElement.textContent = `Success: ${message}`;
+    }
+    function get(){
+        fetch('http://localhost:3000/api/teachers',{
+            method: 'GET', mode: 'no-cors',
+            headers: {'Content-Type':'application/json'}
+        }).then(resp=>resp.json())
+            .then(pdata=>{
+                get_res.innerHTML =JSON.stringify(pdata);
+            });
+    }
+   async function post(){
+        let teacher=document.getElementById('TEACHER').value;
+        let tName=document.getElementById('TEACHER_NAME').value;
+        let tPulpit=document.getElementById('PULPIT').value;
+        event.preventDefault();
+       ClearError();
+
+        if(teacher.trim()!==''&&tName.trim()!==''&&tPulpit.trim()!==''){
+            let data = {
+                "TEACHER":teacher,
+                "TEACHER_NAME":tName,
+                "PULPIT":tPulpit
+            }
+            const response = await fetch('http://localhost:3000/api/teachers', {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json",
+                    "Accept": "application/json"
+                },
+                body:JSON.stringify(data)
+            })
+            if(response.ok){
+                DisplaySuccess('Данные успешно отправлены на сервер');
+            }
+            else{
+                const error = await response.text();
+                displayErrorMessage(error);
+            }
+        }
+        else{
+            displayErrorMessage("Fill all fields");
+        }
+    }
+
+    function DELETE(){
+        event.preventDefault();
+        ClearError()
+
+        let TEACHER=document.getElementById('teacher').value;
+        if(TEACHER.trim()!==''){
+            if (TEACHER){
+                fetch(`http://localhost:3000/api/teachers/${TEACHER}`,{
+                    method: 'DELETE',
+                    headers: {'Content-Type':'application/json'}
+                })
+                    .then(resp=>{return resp.json();})
+                    .then((pdata)=>{console.log('DELETE.pdata',pdata);
+                        if (pdata.error) {
+                            console.error('Error during Delete request:');
+                            displayErrorMessage('Error during Delete request:');
+                        }})
+                    .catch(error => {
+                        console.error('Error during Delete request:', error);
+                        displayErrorMessage(error.message);
+                    });
+            }
+        }
+        else{
+            DisplayError("Fill all fields");
+        }
+
+    }
+
+    async function put() {
+        event.preventDefault();
+        ClearError()
+
+        let teacher = document.getElementById('Teacher').value;
+        let tName = document.getElementById('NEWTEACHER_NAME').value;
+        let tFaculty = document.getElementById('NEWPULPIT').value;
+
+        if(teacher.trim()!==''&&tName.trim()!==''&&tFaculty.trim()!==''){
+            let data = {
+                "TEACHER":teacher,
+                "TEACHER_NAME":tName,
+                "PULPIT":tFaculty
+            }
+            const response = await fetch('api/teachers', {
+                method: "PUT",
+                headers: {
+                    "Content-type": "application/json",
+                    "Accept": "application/json"
+                },
+                body:JSON.stringify(data)
+            })
+            if(response.ok){
+                DisplaySuccess('Данные успешно отправлены на сервер');
+                ClearError();
+            }
+            else{
+                const error = await response.text();
+                displayErrorMessage(error);
+            }
+        }
+        else if(teacher.trim()!==''){
+            const findPulpit = teachers.filter(teach=>{
+                console.log(teach.TEACHER.trim());
+                console.log(teacher.trim());
+                if (teach.TEACHER.trim()===teacher.trim()) {
+                    return teach;
+                }
+            });
+            if(findPulpit.length!==0){
+                document.getElementById("TEACHER_NAME").value = findPulpit[0].TEACHER_NAME;
+                document.getElementById("PULPIT").value= findPulpit[0].PULPIT;
+            }
+            DisplaySuccess("Данные дополнены для изменения");
+        }
+        else{
+            DisplayError("Fill all fields");
+        }
+
+    }
+</script>
+</body>
+</html>

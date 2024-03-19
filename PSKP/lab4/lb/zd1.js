@@ -1,13 +1,14 @@
-const app = require("express")();
+const express = require("express");
 const passport = require("passport");
 const BasicStrategy = require("passport-http").BasicStrategy;
 const session = require("express-session")({
     resave: false,
-    saveUnitialized: false,
-    secret: "leralera",
+    saveUninitialized: false,
+    secret: "SomeSecret",
 });
 
 let users = require(__dirname + "/users.json");
+const app = express();
 app.use(session);
 app.use(passport.initialize());
 app.use(passport.session());
@@ -28,7 +29,7 @@ passport.use(new BasicStrategy((user,password,done)=>{
     if (!cr){
         console.log("incorrect username")
         return done(null,false,{message:"incorrect username"})
-    } 
+    }
     else if (!verPassword(cr.password,password)) {
         console.log("incorrect password")
         return done(null,false,{message:"incorrect password"})
@@ -40,19 +41,15 @@ passport.use(new BasicStrategy((user,password,done)=>{
 }))
 
 passport.serializeUser((user,done)=>{
-    console.log("serialize",user)
     done(null,user)
 })
 
 passport.deserializeUser((user,done)=>{
-    console.log("deserialize",user)
     done(null,user)
 })
 
 
 app.get("/login", (req,resp,next)=>{
-    console.log("login")
-    console.log(req.session.logout)
     if (req.session.logout && req.headers["authorization"]){
         console.log(req.headers["authorization"])
         req.session.logout=false
@@ -60,7 +57,8 @@ app.get("/login", (req,resp,next)=>{
     }
     next()
 }, passport.authenticate("basic"), (req,resp,next)=>{
-    if (req.session.logout==undefined) req.session.logout=false
+    if (req.session.logout==undefined)
+        req.session.logout=false
     next()
 }
 ).get("/login",(req,resp,next)=>{

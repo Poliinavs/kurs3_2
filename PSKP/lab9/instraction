@@ -1,0 +1,34 @@
+CA:
+генерация приватного ключа
+openssl genrsa -des3 -out CA.key 2048
+
+создание сертификата, на который мы будем шифровать ресурсы
+openssl req -x509 -new -key CA.key -days 700 -sha256 -out CA.crt
+
+RESOURCE:
+создание конфига
+RS.cfg
+
+генерация публичного ключа
+openssl genrsa -out RS.key 2048
+
+генерация запроса на получение сертификата
+openssl req -new -key RS.key -out RS.csr -sha256 -config RS.cfg
+
+посылает CA
+RS.csr
+RS.cfg
+
+CA:
+генерация сертификата по запросу от RESOURCE
+openssl x509 -req -in RS.csr -CA CA.crt -CAkey CA.key -CAcreateserial -out RS.crt -days 365 -sha256 -extensions v3_req -extfile RS.cfg
+
+передает RESOURCE
+CA.crt
+RS.crt
+
+RESOURCE:
+CA.crt в хранилище
+в приложении RS.crt
+
+aaaa

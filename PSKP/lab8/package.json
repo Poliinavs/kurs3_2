@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@casl/ability": "^6.7.1",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "redis": "^4.6.13",
+    "sequelize": "^6.37.2",
+    "tedious": "^18.1.0"
+  }
+}

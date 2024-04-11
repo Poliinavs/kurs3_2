@@ -4,8 +4,8 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth2').Strategy;
 
-const GOOGLE_CLIENT_ID = '900409038726-t7hsg77o86f0ede9apn3rs2gjpfo6e1e.apps.googleusercontent.com';
-const GOOGLE_CLIENT_SECRET = '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';
+const GOOGLE_CLIENT_ID = '9';
+const GOOGLE_CLIENT_SECRET = '';
 
 const isLoggedIn = (req, res, next) => {
     if (req.user) {

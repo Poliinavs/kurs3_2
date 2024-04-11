@@ -1,0 +1,130 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main</title>
+</head>
+<body>
+    <div style="display: flex; flex-direction: column; justify-content: space-between; width: 250px;">
+        <a href="/api/ability"> Abilities</a>
+        <a href="/api/user"> Users list</a>
+        <a href="/api/repos"> Repos list</a>
+    </div>
+    <div style="display: flex; flex-direction: column; justify-content: space-between; width: 400px;">
+        <div>
+            <h4>Repository</h4>
+            <input type="number" placeholder="id for del/update" id="repoid"/></br>
+            <input type="text" placeholder="repository name" id="reponame"/></br>
+            <button onclick="postRepo()">Add</button>
+            <button onclick="updateRepo()">Edit</button>
+            <button onclick="deleteRepo()">Delete</button>
+        </div>
+        <div>
+            <h4>Commits</h4>
+            <input type="number" placeholder="id for del/update" id="commitid"/> </br>
+            <input type="number" placeholder="repository id" id="commit_repoid"/> </br>
+            <input type="text" placeholder="message" id="commitmessage"/></br>
+            <button onclick="postCommit()">Add</button>
+            <button onclick="updateCommit()">Edit</button>
+            <button onclick="deleteCommit()">Delete</button>
+        </div>
+    </div>
+    <script>
+        function postRepo() {
+            fetch('http://localhost:3000/api/repos', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json','Accept':'application/json, text/html'},
+                body: JSON.stringify({
+                    reponame: document.getElementById('reponame').value
+                })
+            })
+            .then(response => {return response.text() })
+            .then((body) => {
+                var newHTML = document.open("text/html", "replace"); 
+                newHTML.write(body); 
+                newHTML.close(); 
+            })
+        }
+        function postCommit() {
+            let commit_repoid = document.getElementById('commit_repoid').value
+            fetch(`http://localhost:3000/api/repos/${commit_repoid}/commits`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json','Accept':'application/json, text/html'},
+                body: JSON.stringify({
+                    commitmessage: document.getElementById('commitmessage').value
+                })
+            })
+            .then(response => {return response.text() })
+            .then((body) => {
+                var newHTML = document.open("text/html", "replace"); 
+                newHTML.write(body); 
+                newHTML.close(); 
+            })
+        }
+
+        function updateRepo() {
+            let repoid = document.getElementById('repoid').value
+            fetch(`http://localhost:3000/api/repos/${repoid}`, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json','Accept':'application/json, text/html'},
+                body: JSON.stringify({
+                    reponame: document.getElementById('reponame').value
+                })
+            })
+            .then(response => {return response.text() })
+            .then((body) => {
+                var newHTML = document.open("text/html", "replace"); 
+                newHTML.write(body); 
+                newHTML.close(); 
+            })
+        }
+        function updateCommit() {
+            let commit_repoid = document.getElementById('commit_repoid').value
+            let commitid = document.getElementById('commitid').value
+            fetch(`http://localhost:3000/api/repos/${commit_repoid}/commits/${commitid}`, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json','Accept':'application/json, text/html'},
+                body: JSON.stringify({
+                    commitmessage: document.getElementById('commitmessage').value
+                })
+            })
+            .then(response => {return response.text() })
+            .then((body) => {
+                var newHTML = document.open("text/html", "replace"); 
+                newHTML.write(body); 
+                newHTML.close(); 
+            })
+        }
+        function deleteRepo() {
+            let repoid = document.getElementById('repoid').value
+            fetch(`http://localhost:3000/api/repos/${repoid}`, {
+                method: 'DELETE',
+                headers: {'Content-Type':'application/json','Accept':'application/json, text/html'}
+            })
+            .then(response => {return response.text() })
+            .then((body) => {
+                var newHTML = document.open("text/html", "replace"); 
+                newHTML.write(body); 
+                newHTML.close(); 
+            })
+        }
+        function deleteCommit() {
+            let commit_repoid = document.getElementById('commit_repoid').value
+            let commitid = document.getElementById('commitid').value
+            fetch(`http://localhost:3000/api/repos/${commit_repoid}/commits/${commitid}`, {
+                method: 'DELETE',
+                headers: {'Content-Type':'application/json','Accept':'application/json, text/html'}
+            })
+            .then(response => {return response.text() })
+            .then((body) => {
+                var newHTML = document.open("text/html", "replace"); 
+                newHTML.write(body); 
+                newHTML.close(); 
+            })
+        }
+
+    </script>
+
+</body>
+</html>

@@ -2,14 +2,14 @@ CA:
 генерация приватного ключа
 openssl genrsa -des3 -out CA.key 2048
 
-создание сертификата, на который мы будем шифровать ресурсы
+создание сертификата, который самоподписанный на основе ключа
 openssl req -x509 -new -key CA.key -days 700 -sha256 -out CA.crt
 
 RESOURCE:
 создание конфига
 RS.cfg
 
-генерация публичного ключа
+генерация приватный ключ для HTTPS сервера, только на данном сервере
 openssl genrsa -out RS.key 2048
 
 генерация запроса на получение сертификата
@@ -22,6 +22,10 @@ RS.cfg
 CA:
 генерация сертификата по запросу от RESOURCE
 openssl x509 -req -in RS.csr -CA CA.crt -CAkey CA.key -CAcreateserial -out RS.crt -days 365 -sha256 -extensions v3_req -extfile RS.cfg
+
+
+openssl req -new -key CA.key -subj "/CN=127.0.0.1/CN=apv/CN=LAB20-APV" -out server.csr
+
 
 передает RESOURCE
 CA.crt

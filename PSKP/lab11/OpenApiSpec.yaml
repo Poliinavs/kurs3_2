@@ -1,0 +1,60 @@
+openapi: 3.0.0
+info:
+  title: lab23
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /TS:
+    get:
+      tags:
+        - General
+      summary: New Request
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - General
+      summary: New Request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Olga
+                number: '1234567'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - General
+      summary: New Request
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    put:
+      tags:
+        - General
+      summary: New Request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Sidorov
+                number: '1313'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}

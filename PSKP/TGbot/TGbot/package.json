@@ -1,0 +1,19 @@
+{
+  "name": "lab11",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.12.1",
+    "axios": "^1.6.8",
+    "node-cron": "^3.0.3",
+    "node-telegram-bot-api": "^0.65.1",
+    "request": "^2.88.2",
+    "sqlite3": "^5.1.7"
+  }
+}

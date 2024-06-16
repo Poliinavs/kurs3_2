@@ -1,0 +1,94 @@
+select  employee_id, mm, yy, amount from(
+select employee_id,  EXTRACT(MONTH FROM month) mm, EXTRACT(Year FROM month) yy,sales_amount
+from Sales) 
+model 
+partition by(employee_id) 
+dimension by (mm, yy) 
+measures(sales_amount amount)( 
+amount[1,2024] = amount[cv(),2023] * 1.05, 
+amount[for mm from 2 to 11 increment 1,2024] = amount[cv()-1,2023] * 1.05, 
+amount[12,2024] = amount[12,2023] * 1.05) 
+order by yy desc, mm,employee_id
+
+
+
+CREATE TABLE Sales (
+    employee_id INT,
+    month DATE,
+    sales_amount NUMBER
+);
+
+ALTER TABLE Sales
+DELETE amount NUMBER;
+
+ALTER TABLE Sales
+DROP COLUMN amount;
+
+INSERT INTO Sales (employee_id, month, sales_amount) VALUES (1, TO_DATE('2023-01-01', 'YYYY-MM-DD'), 1000);
+INSERT INTO Sales (employee_id, month, sales_amount) VALUES (1, TO_DATE('2023-02-01', 'YYYY-MM-DD'), 1500);
+INSERT INTO Sales (employee_id, month, sales_amount) VALUES (1, TO_DATE('2023-03-01', 'YYYY-MM-DD'), 2000);
+INSERT INTO Sales (employee_id, month, sales_amount) VALUES (1, TO_DATE('2023-04-01', 'YYYY-MM-DD'), 2500);
+INSERT INTO Sales (employee_id, month, sales_amount) VALUES (2, TO_DATE('2023-01-01', 'YYYY-MM-DD'), 1200);
+INSERT INTO Sales (employee_id, month, sales_amount) VALUES (2, TO_DATE('2023-02-01', 'YYYY-MM-DD'), 1800);
+INSERT INTO Sales (employee_id, month, sales_amount) VALUES (2, TO_DATE('2023-03-01', 'YYYY-MM-DD'), 2200);
+INSERT INTO Sales (employee_id, month, sales_amount) VALUES (2, TO_DATE('2023-04-01', 'YYYY-MM-DD'), 2800);
+commit;
+
+select * from Sales
+  ORDER BY month
+
+--1
+select  employee_id, mm, yy, amount from(
+select employee_id,  EXTRACT(MONTH FROM month) mm, EXTRACT(Year FROM month) yy,sales_amount
+from Sales) 
+model 
+partition by(employee_id) 
+dimension by (mm, yy) 
+measures(sales_amount amount)( 
+amount[1,2024] = amount[currentv(),2023] * 1,05, 
+amount[for mm from 2 to 11 increment 1,2024] = amount[cv()-1,2023] * 1,05, 
+amount[12,2024] = amount[12,2023] * 1,05) 
+order by yy desc, mm,employee_id
+
+
+SELECT 
+    employee_id,  
+    EXTRACT(MONTH FROM month) AS mm, 
+    EXTRACT(YEAR FROM month) AS yy, 
+    sales_amount, 
+    amount
+FROM 
+    Sales 
+    MODEL 
+        PARTITION BY (employee_id) 
+        DIMENSION BY (mm, yy) 
+        MEASURES (sales_amount, amount) 
+        RULES (
+            amount[1, 2024] = sales_amount[CV(), 2023] * 1.05,
+            amount[FOR mm FROM 2 TO 11 INCREMENT 1, 2024] = amount[CV()-1, 2023] * 1.05,
+            amount[12, 2024] = amount[12, 2023] * 1.05
+        ) 
+ORDER BY 
+    yy DESC, 
+    mm, 
+    employee_id;
+
+--2
+
+SELECT * FROM Sales
+MATCH_RECOGNIZE (
+  ORDER BY month
+  MEASURES
+    FIRST(A.month) AS START_RISE,
+    LAST(A.month) AS END_RISE,
+    LAST(B.month) AS END_FALL,
+    LAST(C.month) AS END_RISE_AGAIN,
+    FIRST(A.employee_id) AS CONFIG_ID
+  ONE ROW PER MATCH
+  AFTER MATCH SKIP TO NEXT ROW
+  PATTERN (A+ B+ C+)
+  DEFINE
+    A AS sales_amount > PREV(sales_amount),
+    B AS sales_amount < PREV(sales_amount),
+    C AS sales_amount > PREV(sales_amount)
+) MR;

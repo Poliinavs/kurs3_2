@@ -1,0 +1,156 @@
+ALTER TABLE ProductCategories
+ADD hierarchy_path HierarchyID;
+
+ALTER TABLE ProductCategories
+DROP COLUMN hierarchy_path;
+
+delete from ProductCategories
+
+select * from ProductCategories
+
+--2.	Создать процедуру, которая отобразит все подчиненные узлы с указанием уровня
+--иерархии (параметр – значение узла).
+
+CREATE PROCEDURE ShowSubordinateNodes
+    @nodeValue HierarchyID
+AS
+BEGIN
+    WITH HierarchicalCTE AS
+    (
+        SELECT
+            hierarchy_path,
+            category_id,
+            category_name,
+            hierarchy_path.ToString() AS hierarchy_path_str
+        FROM
+            ProductCategories
+    )
+    
+    SELECT
+        category_id,
+        category_name,
+        hierarchy_path_str,
+        hierarchy_path.GetLevel() AS hierarchy_level
+    FROM
+        HierarchicalCTE
+    WHERE
+        hierarchy_path.IsDescendantOf(@nodeValue) = 1
+    ORDER BY
+        hierarchy_path;
+END;
+
+EXEC ShowSubordinateNodes '/';
+
+
+
+INSERT INTO ProductCategories (category_id, category_name, hierarchy_path)
+VALUES
+    (1, 'magasine', HierarchyID::Parse('/')),
+    (10, 'Smartphones', HierarchyID::Parse('/1/1/')),
+    (11, 'Laptops', HierarchyID::Parse('/1/2/')),
+    (12, 'Cameras', HierarchyID::Parse('/1/3/')),
+    (13, 'Home Appliances', HierarchyID::Parse('/2/')),
+    (14, 'Refrigerators', HierarchyID::Parse('/2/1/')),
+    (15, 'Washing Machines', HierarchyID::Parse('/2/2/'));
+
+	select * from ProductCategories
+
+--3.	Создать процедуру, которая добавит подчиненный узел 
+--(параметр – значение родительского узла).
+CREATE OR ALTER PROCEDURE AddSubordinateProductCategory
+    @ParentNodeHierarchy HIERARCHYID,
+    @NewNodeName NVARCHAR(100),
+	    @catId Int
+AS
+BEGIN
+    DECLARE @NewNode HIERARCHYID;
+
+    DECLARE @LastChild HIERARCHYID;
+
+    BEGIN TRY
+        SELECT @LastChild = MAX(hierarchy_path)
+        FROM ProductCategories
+        WHERE hierarchy_path.GetAncestor(1) = @ParentNodeHierarchy;
+
+        SELECT @NewNode = @ParentNodeHierarchy.GetDescendant(@LastChild, NULL)
+		FROM ProductCategories
+        WHERE hierarchy_path = @ParentNodeHierarchy;
+
+
+        INSERT INTO ProductCategories( category_id,hierarchy_path, category_name)
+        VALUES (@catId, @NewNode, @NewNodeName);
+    END TRY
+    BEGIN CATCH
+        PRINT 'Ошибка: Невозможно добавить уже существующую иерархию.';
+    END CATCH
+END
+GO
+
+
+DECLARE @ParentNodeHierarchy HIERARCHYID = '/';
+DECLARE @NewNodeName NVARCHAR(100) = 'New Subcategory';
+EXEC AddSubordinateProductCategory
+    @ParentNodeHierarchy,
+    @NewNodeName,
+	    16;
+
+
+SELECT category_id, category_name, hierarchy_path.ToString() AS readable_hierarchy_path
+FROM ProductCategories;
+
+
+--4.	Создать процедуру, которая переместит всех подчиненных (первый параметр – значение родительского узла, 
+--подчиненные которого будут перемещаться, второй параметр – значение нового родительского узла).
+
+CREATE OR ALTER PROCEDURE MoveSubordinates
+    @OldParentNodeHierarchy HIERARCHYID,
+    @NewParentNodeHierarchy HIERARCHYID
+AS
+BEGIN
+    DECLARE @NewChildNode HIERARCHYID;
+    DECLARE @MaxChildNode HIERARCHYID;
+    DECLARE @CurrentChildNode HIERARCHYID;
+    DECLARE @ChildNodesCursor CURSOR;
+
+    BEGIN TRY
+        SET @ChildNodesCursor = CURSOR FOR
+        SELECT hierarchy_path
+        FROM ProductCategories
+        WHERE hierarchy_path.GetAncestor(1) = @OldParentNodeHierarchy
+        ORDER BY hierarchy_path;
+
+        OPEN @ChildNodesCursor;
+
+        FETCH NEXT FROM @ChildNodesCursor INTO @CurrentChildNode;
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+            SELECT @MaxChildNode = MAX(hierarchy_path)
+            FROM ProductCategories
+            WHERE hierarchy_path.GetAncestor(1) = @NewParentNodeHierarchy;
+
+            SET @NewChildNode = @NewParentNodeHierarchy.GetDescendant(@MaxChildNode, NULL);
+
+            UPDATE ProductCategories
+            SET hierarchy_path = @NewChildNode
+            WHERE hierarchy_path = @CurrentChildNode;
+
+            FETCH NEXT FROM @ChildNodesCursor INTO @CurrentChildNode;
+        END;
+
+        CLOSE @ChildNodesCursor;
+        DEALLOCATE @ChildNodesCursor;
+
+        PRINT 'Узлы успешно перемещены.';
+    END TRY
+    BEGIN CATCH
+        PRINT 'Ошибка: Невозможно переместить узлы.';
+    END CATCH
+END;
+GO
+
+DECLARE @OldParentNodeHierarchy HIERARCHYID = '/2/';
+DECLARE @NewParentNodeHierarchy HIERARCHYID = '/1/';
+EXEC MoveSubordinates @OldParentNodeHierarchy, @NewParentNodeHierarchy;
+
+SELECT category_id, category_name, hierarchy_path.ToString() AS readable_hierarchy_path
+FROM ProductCategories;

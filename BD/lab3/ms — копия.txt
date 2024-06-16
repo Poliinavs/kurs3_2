@@ -1,0 +1,64 @@
+ALTER TABLE ProductCategories
+ADD (parent_category_id NUMBER);
+select * from ProductCategories
+delete from ProductCategories
+
+BEGIN
+    INSERT INTO ProductCategories (category_id, category_name, parent_category_id) VALUES (1, 'Electronics', NULL);
+    INSERT INTO ProductCategories (category_id, category_name, parent_category_id) VALUES (2, 'Mobile Phones', 1);
+    INSERT INTO ProductCategories (category_id, category_name, parent_category_id) VALUES (3, 'Laptops', 1);
+    INSERT INTO ProductCategories (category_id, category_name, parent_category_id) VALUES (4, 'Smartphones', 2);
+        INSERT INTO ProductCategories (category_id, category_name, parent_category_id) VALUES (5, 'Iphone', 3);
+        INSERT INTO ProductCategories (category_id, category_name, parent_category_id) VALUES (6, 'Sumsung', 3);
+
+END;
+
+--1
+CREATE OR REPLACE PROCEDURE display_hierarchy(p_node_id IN NUMBER) IS
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('ID | Level');
+    FOR rec IN (
+        SELECT category_id AS ID, LEVEL
+        FROM ProductCategories
+        WHERE PRIOR category_id = p_node_id
+        START WITH category_id = p_node_id
+        CONNECT BY PRIOR category_id = parent_category_id
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE(rec.ID || ' | ' || rec.LEVEL);
+    END LOOP;
+END;
+
+
+--2
+CREATE OR REPLACE PROCEDURE add_child_node(p_parent_node_id IN NUMBER, p_child_node_id IN NUMBER) IS
+BEGIN
+    INSERT INTO ProductCategories(category_id, category_name, parent_category_id)
+    VALUES (p_child_node_id, 'New Category', p_parent_node_id);
+END;
+/
+
+
+--3
+CREATE OR REPLACE PROCEDURE move_children(p_old_parent_node_id IN NUMBER, p_new_parent_node_id IN NUMBER) IS
+BEGIN
+    UPDATE ProductCategories SET parent_category_id = p_new_parent_node_id WHERE parent_category_id = p_old_parent_node_id;
+END;
+
+--4
+BEGIN
+    display_hierarchy(1);
+END;
+
+--5 УРОВЕНЬ И НОВ ID
+BEGIN
+    add_child_node(3, 11);
+END;
+
+--6 
+BEGIN
+    move_children(3, 1);
+END;
+
+--********************
+SELECT *
+FROM ProductCategories;

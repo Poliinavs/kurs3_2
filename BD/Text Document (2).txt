@@ -1,0 +1,106 @@
+-----------------------------------
+
+-------------------------------------------------------------------------
+DECLARE
+    TYPE product_type IS RECORD (
+        Product_ID INT,
+        Title NVARCHAR2(100),
+        Description NVARCHAR2(255),
+        Price NUMBER(10, 2),
+        Category_ID INT
+    );
+    TYPE order_type IS RECORD (
+        Order_ID INT,
+        Customer_Id INT,
+        Order_Date TIMESTAMP,
+        Status NVARCHAR2(255)
+    );
+
+    TYPE product_collection_type IS TABLE OF product_type;
+    TYPE order_collection_type IS TABLE OF order_type;
+
+    products_collection product_collection_type;
+    orders_collection order_collection_type;
+
+    -- Variables for checking existence and counting empty collections
+    v_product_id INT := 1; 
+    v_exists BOOLEAN := FALSE;
+    v_empty_collections INT := 0;
+BEGIN
+
+    SELECT Product_ID, Title, Description, Price, Category_ID 
+    BULK COLLECT INTO products_collection
+    FROM products;
+
+    SELECT Order_ID, Customer_Id, Order_Date, Status 
+    BULK COLLECT INTO orders_collection
+    FROM orders;
+
+    FOR i IN 1..products_collection.COUNT LOOP
+        DBMS_OUTPUT.PUT_LINE('Product_ID: ' || products_collection(i).Product_ID || ', Title: ' || products_collection(i).Title || ', Description: ' || products_collection(i).Description || ', Price: ' || products_collection(i).Price || ', Category_ID: ' || products_collection(i).Category_ID);
+    END LOOP;
+
+    FOR i IN 1..orders_collection.COUNT LOOP
+        DBMS_OUTPUT.PUT_LINE('Order_ID: ' || orders_collection(i).Order_ID || ', Customer_Id: ' || orders_collection(i).Customer_Id || ', Order_Date: ' || orders_collection(i).Order_Date || ', Status: ' || orders_collection(i).Status);
+    END LOOP;
+
+    -- Check if a specific Product_ID exists in products_collection
+    FOR i IN 1..products_collection.COUNT LOOP
+        IF products_collection(i).Product_ID = v_product_id THEN
+            v_exists := TRUE;
+            EXIT; -- Exit loop if found
+        END IF;
+    END LOOP;
+
+    IF v_exists THEN
+        DBMS_OUTPUT.PUT_LINE('Element with Product_ID ' || v_product_id || ' exists in products_collection');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Element with Product_ID ' || v_product_id || ' does not exist in products_collection');
+    END IF;
+
+   
+
+    -- Bulk insert data from products_collection into TableProducts
+    FORALL i IN 1..products_collection.COUNT
+        INSERT INTO TableProducts (Product_ID, Title, Description, Price, Category_ID)
+        VALUES (products_collection(i).Product_ID, products_collection(i).Title, products_collection(i).Description, products_collection(i).Price, products_collection(i).Category_ID);
+
+    -- Bulk insert data from orders_collection into TableOrders
+    FORALL i IN 1..orders_collection.COUNT
+        INSERT INTO TableOrders (Order_ID, Customer_Id, Order_Date, Status)
+        VALUES (orders_collection(i).Order_ID, orders_collection(i).Customer_Id, orders_collection(i).Order_Date, orders_collection(i).Status);
+        
+    IF orders_collection.COUNT > 0 THEN
+    DBMS_OUTPUT.PUT_LINE('empty collection not found');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('empty collection ' || orders_collection.COUNT );
+    END IF;
+
+    COMMIT;
+END;
+/
+
+
+
+
+select * from TableProducts;
+select * from TableOrders;
+
+drop table TableProducts;
+drop table TableOrders;
+CREATE TABLE TableProducts (
+   Product_ID INT,
+        Title NVARCHAR2(100),
+        Description NVARCHAR2(255),
+        Price NUMBER(10, 2),
+        Category_ID INT
+);
+
+CREATE TABLE TableOrders (
+     Order_ID INT,
+        Customer_Id INT,
+        Order_Date TIMESTAMP,
+        Status NVARCHAR2(255)
+);
+
+

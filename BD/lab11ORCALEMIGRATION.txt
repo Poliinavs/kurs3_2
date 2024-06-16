@@ -1,0 +1,172 @@
+DROP TABLE Orders CASCADE CONSTRAINTS;
+
+-- Создание таблицы Orders для Oracle
+CREATE TABLE Ordersa (
+    order_id NUMBER PRIMARY KEY,
+    order_date TIMESTAMP,
+    status VARCHAR2(50),
+    customer_id NUMBER,
+    product_id NUMBER,
+    CONSTRAINT fk_product_id FOREIGN KEY (product_id) REFERENCES Product(product_id)
+);
+
+-- Удаление таблицы Product, если она уже существует
+DROP TABLE Product CASCADE CONSTRAINTS;
+
+-- Создание таблицы Product для Oracle
+CREATE TABLE Product (
+    product_id NUMBER PRIMARY KEY,
+    title VARCHAR2(100),
+    description VARCHAR2(300),
+    price NUMBER,
+    category_id NUMBER
+);
+
+-- Вставка данных в таблицу Orders
+INSERT INTO Ordersa (order_id, order_date, status, customer_id, product_id)
+VALUES
+(3, TO_TIMESTAMP('2024-04-29 09:45:00', 'YYYY-MM-DD HH24:MI:SS'), 'Delivered', 1003, 3);
+
+commit;
+
+
+
+
+CREATE OR REPLACE FUNCTION get_orders_in_interval(
+    start_date IN DATE,
+    end_date IN DATE
+)
+RETURN SYS_REFCURSOR
+AS
+    orders_cursor SYS_REFCURSOR;
+BEGIN
+    OPEN orders_cursor FOR
+        SELECT *
+        FROM Ordersa
+        WHERE order_date BETWEEN start_date AND end_date;
+    
+    RETURN orders_cursor;
+END;
+/
+
+
+DECLARE
+    orders_result SYS_REFCURSOR;
+    order_record Ordersa%ROWTYPE;
+BEGIN
+    orders_result := get_orders_in_interval(
+                        TO_DATE('2024-04-01', 'YYYY-MM-DD'), 
+                        TO_DATE('2024-04-30', 'YYYY-MM-DD')
+                     );
+    
+    LOOP
+        FETCH orders_result INTO order_record;
+        EXIT WHEN orders_result%NOTFOUND;
+        
+        -- Делайте что-то с каждой записью, например, выводите информацию о заказе
+        DBMS_OUTPUT.PUT_LINE('Order ID: ' || order_record.order_id || ', Order Date: ' || order_record.order_date || ', Status: ' || order_record.status);
+    END LOOP;
+    
+    CLOSE orders_result;
+END;
+/
+
+
+-- Вставка данных в таблицу Product
+INSERT INTO Product (product_id, title, description, price, category_id)
+VALUES
+(1, 'Product 1', 'Description for Product 1', 10.99, 1),
+(2, 'Product 2', 'Description for Product 2', 15.99, 2),
+(3, 'Product 3', 'Description for Product 3', 20.49, 1);
+
+
+delete from Ordersa
+select * from Ordersa
+
+
+INSERT INTO PRODUCTA (PRODUCT_ID, TITLE, DESCRIPTION, PRICE, CATEGORY_ID) VALUES (1,'Product 1','Description for Product 1',10,99);
+--Row 2
+INSERT INTO PRODUCTA (PRODUCT_ID, TITLE, DESCRIPTION, PRICE, CATEGORY_ID) VALUES (2,'Product 2','Description for Product 2',15,99);
+--Row 3
+INSERT INTO PRODUCTA (PRODUCT_ID, TITLE, DESCRIPTION, PRICE, CATEGORY_ID) VALUES (3,'Product 3','Description for Product 3',20,49);
+
+delete from PRODUCTA
+
+select * from PRODUCTA
+
+
+CREATE TABLE Ordersa (
+    order_id NUMBER PRIMARY KEY,
+    order_date TIMESTAMP,
+    status VARCHAR2(50),
+    customer_id NUMBER,
+    product_id NUMBER,
+    CONSTRAINT fk_product_id FOREIGN KEY (product_id) REFERENCES Product(product_id)
+);
+
+
+
+CREATE OR REPLACE TYPE OrdersType AS OBJECT (
+    OrderID NUMBER,
+    CustomerID NUMBER,
+    ProductID NUMBER,
+    OrderDateTime TIMESTAMP,
+  status VARCHAR2(50)
+
+);
+
+CREATE OR REPLACE TYPE OrderType AS TABLE OF OrdersType;
+
+
+
+-- Создание функции для получения заказов в заданном временном диапазоне
+CREATE OR REPLACE FUNCTION GetOrdersByDateRange(start_date IN TIMESTAMP, end_date IN TIMESTAMP)
+RETURN OrderType PIPELINED
+IS
+BEGIN
+    -- Выборка заказов из таблицы Ordersa, попадающих в указанный временной диапазон
+    FOR rec IN (
+        SELECT order_id, customer_id, product_id, order_date, status 
+        FROM Ordersa 
+        WHERE order_date BETWEEN start_date AND end_date
+    )
+    LOOP
+        -- Добавление каждого заказа в результаты функции
+        PIPE ROW(OrdersType(rec.order_id, rec.customer_id, rec.product_id, rec.order_date, rec.status));
+    END LOOP;
+    
+    -- Возврат результатов функции
+    RETURN;
+END;
+/
+
+
+SELECT * FROM TABLE(GetOrdersByDateRange(TIMESTAMP '2023-01-24 10:00:00', TIMESTAMP '2024-12-24 17:00:00'));
+
+CREATE OR REPLACE TYPE OrdersType AS OBJECT (
+         order_id NUMBER,
+    order_date TIMESTAMP,
+    status VARCHAR2(50),
+    customer_id NUMBER,
+    product_id NUMBER,
+
+);
+CREATE OR REPLACE TYPE OrderListType AS TABLE OF OrdersType;
+drop type OrderListType;
+select * from OrdersType;
+
+CREATE OR REPLACE FUNCTION GetOrdersByDateRange(start_date IN TIMESTAMP, end_date IN TIMESTAMP)
+RETURN OrderListType PIPELINED
+IS
+BEGIN
+    FOR rec IN (SELECT OrderID, ClientID, ProviderID, ServiceID, OrderDateTime, ServiceAddress FROM TableOrders WHERE OrderDateTime BETWEEN start_date AND end_date)
+    LOOP
+        PIPE ROW(OrdersType(rec.OrderID, rec.ClientID, rec.ProviderID, rec.ServiceID, rec.OrderDateTime, rec.ServiceAddress));
+    END LOOP;
+    RETURN;
+END;
+/
+
+
+SELECT * FROM TABLE(GetOrdersByDateRange(TIMESTAMP '2024-01-24 10:00:00', TIMESTAMP '2024-12-24 17:00:00'));
+

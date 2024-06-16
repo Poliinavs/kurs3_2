@@ -1,0 +1,221 @@
+-- Вставка данных в таблицу Productsa
+INSERT INTO Productsa (product_id, name, price, quantity)
+VALUES (1, 'Ноутбук', 1000, 10);
+
+INSERT INTO Productsa (product_id, name, price, quantity)
+VALUES (2, 'Смартфон', 500, 20);
+
+INSERT INTO Productsa (product_id, name, price, quantity)
+VALUES (3, 'Планшет', 700, 15);
+
+-- Вставка данных в таблицу Ordersa
+INSERT INTO Ordersa (order_id, order_date)
+VALUES (1, TO_DATE('2024-04-20', 'YYYY-MM-DD'));
+
+INSERT INTO Ordersa (order_id, order_date)
+VALUES (2, TO_DATE('2024-04-19', 'YYYY-MM-DD'));
+
+-- Вставка данных в таблицу Order_Products (примеры заказов)
+-- Заказ 1
+INSERT INTO Order_Products (order_id, product_id, quantity)
+VALUES (1, 1, 2); -- 2 ноутбука
+
+INSERT INTO Order_Products (order_id, product_id, quantity)
+VALUES (1, 2, 5); -- 5 смартфонов
+
+-- Заказ 2
+INSERT INTO Order_Products (order_id, product_id, quantity)
+VALUES (2, 2, 3); -- 3 смартфона
+
+INSERT INTO Order_Products (order_id, product_id, quantity)
+VALUES (2, 3, 2); -- 2 планшета
+
+commit;
+
+
+Create TABLE Productsa (
+    product_id NUMBER PRIMARY KEY,
+    name VARCHAR2(100),
+    price NUMBER,
+    quantity NUMBER
+);
+
+-- Таблица для заказов
+CREATE TABLE Ordersa (
+    order_id NUMBER PRIMARY KEY,
+    order_date DATE
+);
+
+-- Таблица для связи товаров с заказами (многие ко многим)
+CREATE TABLE Order_Products (
+    order_id NUMBER,
+    product_id NUMBER,
+    quantity NUMBER,
+    FOREIGN KEY (order_id) REFERENCES Ordersa(order_id),
+    FOREIGN KEY (product_id) REFERENCES Productsa(product_id)
+);
+
+---
+CREATE TYPE Product_Type AS OBJECT (
+    product_id NUMBER,
+    name VARCHAR2(100),
+    price NUMBER,
+    quantity NUMBER,
+    CONSTRUCTOR FUNCTION Product_Type(p_product_id NUMBER, p_name VARCHAR2, p_price NUMBER, p_quantity NUMBER) RETURN SELF AS RESULT,
+     MAP MEMBER FUNCTION func_map RETURN NUMBER deterministic,
+          
+    MEMBER FUNCTION get_product_info RETURN VARCHAR2,
+          
+    MEMBER PROCEDURE print_products_info
+);
+/
+
+CREATE TYPE BODY Product_Type AS
+    -- Конструктор объекта
+    CONSTRUCTOR FUNCTION Product_Type(p_product_id NUMBER, p_name VARCHAR2, p_price NUMBER, p_quantity NUMBER) RETURN SELF AS RESULT IS
+    BEGIN
+        SELF.product_id := p_product_id;
+        SELF.name := p_name;
+        SELF.price := p_price;
+        SELF.quantity := p_quantity;
+        RETURN;
+    END;
+
+    -- Метод для выдачи информации о продукте
+    MEMBER FUNCTION get_product_info RETURN VARCHAR2 IS
+    BEGIN
+        RETURN 'Product ID: ' || TO_CHAR(SELF.product_id) || ', Name: ' || SELF.name || ', Price: ' || TO_CHAR(SELF.price) || ', Quantity: ' || TO_CHAR(SELF.quantity);
+    END;
+
+    -- Дополнительные методы или процедуры
+    MAP MEMBER FUNCTION func_map RETURN NUMBER IS
+    BEGIN
+        RETURN SELF.product_id; -- Пример возврата атрибута product_id в методе MAP
+    END;
+
+    MEMBER PROCEDURE print_products_info IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('Product ID: ' || TO_CHAR(SELF.product_id));
+        DBMS_OUTPUT.PUT_LINE('Name: ' || SELF.name);
+        DBMS_OUTPUT.PUT_LINE('Price: ' || TO_CHAR(SELF.price));
+        DBMS_OUTPUT.PUT_LINE('Quantity: ' || TO_CHAR(SELF.quantity));
+    END;
+END;
+/
+
+CREATE or Replace  TYPE Order_Type AS OBJECT (
+    order_id NUMBER,
+    order_date DATE,
+    CONSTRUCTOR FUNCTION Order_Type(p_order_id NUMBER, p_order_date DATE) RETURN SELF AS RESULT,
+    MAP MEMBER FUNCTION func_map RETURN NUMBER deterministic,
+
+    MEMBER FUNCTION get_order_info RETURN VARCHAR2,
+          
+    MEMBER PROCEDURE print_orders_info
+);
+
+CREATE OR REPLACE TYPE BODY Order_Type AS
+    -- Конструктор объекта
+    CONSTRUCTOR FUNCTION Order_Type(p_order_id NUMBER, p_order_date DATE) RETURN SELF AS RESULT IS
+    BEGIN
+        SELF.order_id := p_order_id;
+        SELF.order_date := p_order_date;
+        RETURN;
+    END;
+
+    -- Метод для возврата order_id
+    MAP MEMBER FUNCTION func_map RETURN NUMBER deterministic IS
+    BEGIN
+        RETURN SELF.order_id;
+    END;
+
+    -- Метод для получения информации о заказе
+    MEMBER FUNCTION get_order_info RETURN VARCHAR2 IS
+    BEGIN
+        RETURN 'Order ID: ' || TO_CHAR(SELF.order_id) || ', Order Date: ' || TO_CHAR(SELF.order_date);
+    END;
+
+    -- Метод для печати информации о заказе
+    MEMBER PROCEDURE print_orders_info IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE('Order ID: ' || TO_CHAR(SELF.order_id));
+        DBMS_OUTPUT.PUT_LINE('Order Date: ' || TO_CHAR(SELF.order_date));
+    END;
+END;
+/
+
+
+--3.	Скопировать данные из реляционных таблиц в объектные.
+CREATE TABLE OrdersTable OF Order_Type;
+CREATE TABLE ProductTable OF Product_Type;
+
+INSERT INTO OrdersTable (SELECT order_id, order_date FROM Ordersa);
+INSERT INTO ProductTable (SELECT product_id, name, price, quantity FROM Productsa);
+commit;
+select * from ProductTable
+select * from OrdersTable
+delete from OrdersTable
+--4 4.	Продемонстрировать применение объектных представлений.
+
+CREATE OR REPLACE VIEW Products_v OF Product_Type
+    WITH OBJECT IDENTIFIER (product_id)
+    AS
+        SELECT product_id, name, price, quantity
+        FROM Productsa;
+SELECT product_id, name, price, quantity
+FROM Products_v;
+
+
+--orderType
+CREATE VIEW Orders_v OF Order_Type
+    WITH OBJECT IDENTIFIER (order_id)
+    AS
+        SELECT order_id, order_date
+        FROM OrdersTable;
+
+SELECT order_id, order_date
+FROM Orders_v;
+
+--5 ProductType
+CREATE INDEX idx_product_name ON ProductTable (name);
+SELECT * FROM ProductTable WHERE name = 'Ноутбук';
+
+create table ProductssIndex(
+        Product_Type Product_Type
+    );
+    
+    select * from ProductssIndex;
+   drop index ServiceIndexMethod; 
+ create index ProductssIndexMethod on ProductssIndex (Product_Type.func_map());
+
+INSERT INTO ProductssIndex VALUES (Product_Type(1, 'Ноутбук', 1000, 10));
+INSERT INTO ProductssIndex VALUES (Product_Type(2, 'Смартфон', 500, 20));
+
+SELECT s.Product_Type.product_id
+FROM ProductssIndex s
+WHERE s.Product_Type.func_map() = 1;
+
+--5 OrderType
+CREATE INDEX idx_order_date ON OrdersTable (order_date);
+
+SELECT *
+FROM OrdersTable
+where order_date = '20.04.24'
+--индекс на метод
+
+CREATE TABLE OrdersIndex (
+    Order_Type Order_Type
+);
+
+-- Вставка данных заказов в таблицу OrdersIndex
+INSERT INTO OrdersIndex VALUES (Order_Type(1, TO_DATE('2024-04-23', 'YYYY-MM-DD')));
+INSERT INTO OrdersIndex VALUES (Order_Type(2, TO_DATE('2024-04-24', 'YYYY-MM-DD')));
+
+-- Создание индекса на методе func_map() для типа данных Order_Type
+CREATE INDEX OrdersIndexMethod ON OrdersIndex (Order_Type.func_map());
+
+-- Выборка данных из таблицы OrdersIndex, используя метод func_map()
+SELECT o.Order_Type.order_id
+FROM OrdersIndex o
+WHERE o.Order_Type.func_map() = 1;
+

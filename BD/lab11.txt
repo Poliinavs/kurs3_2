@@ -1,0 +1,68 @@
+drop function GetOrdersAndProductsByDateRange;
+
+SELECT * FROM GetOrdersAndProductsByDateRange('2024-04-26T10:30:00', '2024-05-26T10:30:00');
+
+
+select * from orders;
+select * from products;
+drop table orders;
+
+-- Создание таблицы Orders
+CREATE TABLE Orders (
+    order_id INT NOT NULL,
+    order_date DATETIME NULL,
+    status VARCHAR(50) NULL,
+    customer_id INT NULL,
+    product_id INT NULL
+);
+
+-- Создание таблицы Products
+CREATE TABLE Product (
+    product_id INT NOT NULL,
+    title VARCHAR(100) NULL,
+    description VARCHAR(300) NULL,
+    price FLOAT NULL,
+    category_id INT NULL
+);
+
+INSERT INTO Orders (order_id, order_date, status, customer_id, product_id)
+VALUES
+(1, '2024-04-27T10:00:00', 'Pending', 1001, 1),
+(2, '2024-04-28T12:30:00', 'Shipped', 1002, 2),
+(3, '2024-04-29T09:45:00', 'Delivered', 1003, 3);
+
+-- Заполнение таблицы Products
+INSERT INTO Product (product_id, title, description, price, category_id)
+VALUES
+(1, 'Product 1', 'Description for Product 1', 10.99, 1),
+(2, 'Product 2', 'Description for Product 2', 15.99, 2),
+(3, 'Product 3', 'Description for Product 3', 20.49, 1);
+
+
+CREATE FUNCTION GetOrdersAndProductsByDateRange
+(
+    @start_date DATETIME,
+    @end_date DATETIME
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        o.order_id,
+        o.order_date,
+        o.status,
+        o.customer_id,
+        o.product_id,
+        p.title,
+        p.description,
+        p.price,
+        p.category_id
+    FROM 
+        Orders o
+    INNER JOIN 
+        Product p ON o.product_id = p.product_id
+    WHERE 
+        o.order_date BETWEEN @start_date AND @end_date
+);
+SELECT * FROM GetOrdersAndProductsByDateRange('2024-01-01', '2024-05-01');

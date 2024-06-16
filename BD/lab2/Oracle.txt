@@ -1,0 +1,278 @@
+--pdp_apv
+-- Create Users table
+CREATE TABLE Users (
+    customer_id INT PRIMARY KEY,
+    fio VARCHAR2(100),
+    email VARCHAR2(100) UNIQUE,
+    password VARCHAR2(150),
+    address VARCHAR2(255)
+);
+
+-- Create Products table
+CREATE TABLE Products (
+    product_id INT PRIMARY KEY ,
+    title VARCHAR2(100),
+    description VARCHAR2(300),
+    price NUMBER(10, 2),
+    category_id INT,
+    CONSTRAINT fk_products_category
+        FOREIGN KEY (category_id)
+        REFERENCES ProductCategories(category_id)
+);
+
+-- Create ShoppingCarts table
+CREATE TABLE ShoppingCarts (
+    cart_id INT PRIMARY KEY,
+    customer_id INT,
+    CONSTRAINT fk_shoppingcarts_user
+        FOREIGN KEY (customer_id)
+        REFERENCES Users(customer_id)
+);
+
+CREATE TABLE ProductShoppingCartItems (
+    cart_id INT,
+    product_id INT,
+    CONSTRAINT fk_psci_cart
+        FOREIGN KEY (cart_id)
+        REFERENCES ShoppingCarts(cart_id),
+    CONSTRAINT fk_psci_product
+        FOREIGN KEY (product_id)
+        REFERENCES Products(product_id)
+);
+
+
+-- Create Orders table
+CREATE OR REPLACE TRIGGER UpdateOrderStatus
+BEFORE INSERT ON Orders
+FOR EACH ROW
+BEGIN
+    :new.status := 'Processing';
+END;
+
+
+-- Create ProductCategories table
+CREATE TABLE ProductCategories (
+    category_id INT PRIMARY KEY,
+    category_name VARCHAR2(50)
+);
+
+-- Create index on ProductShoppingCartItems
+CREATE INDEX idx_cart_product ON ProductShoppingCartItems(cart_id, product_id);
+
+-- Create index on Orders
+CREATE INDEX idx_customer_id_orders ON Orders(customer_id);
+
+-- Create index on ProductCategories
+CREATE INDEX idx_category_name ON ProductCategories(category_name);
+
+-- Create view ShoppingCartView
+CREATE VIEW ShoppingCartView AS
+SELECT 
+    sc.cart_id,
+    sc.customer_id,
+    p.product_id,
+    p.title,
+    p.description,
+    p.price
+FROM ShoppingCarts sc
+JOIN ProductShoppingCartItems psi ON sc.cart_id = psi.cart_id
+JOIN Products p ON psi.product_id = p.product_id;
+
+-- Create view OrderDetailsView
+CREATE VIEW OrderDetailsView AS
+SELECT 
+    o.order_id,
+    o.order_date,
+    o.status,
+    o.customer_id,
+    u.fio AS customer_name,
+    p.product_id,
+    p.title,
+    p.price
+FROM Orders o
+JOIN Users u ON o.customer_id = u.customer_id
+JOIN ProductShoppingCartItems psi ON o.order_id = psi.cart_id -- Adjusted join condition
+JOIN Products p ON psi.product_id = p.product_id;
+
+-- Create trigger UpdateOrderStatus
+CREATE OR REPLACE TRIGGER UpdateOrderStatus
+AFTER INSERT ON Orders
+FOR EACH ROW
+BEGIN
+    UPDATE Orders
+    SET status = 'Processing'
+    WHERE order_id = :new.order_id;
+END;
+
+-- Получение информации о продуктах в корзине для заданного пользователя
+CREATE OR REPLACE FUNCTION GetProductsInCart(p_customerId NUMBER)
+RETURN SYS_REFCURSOR
+IS
+  v_cursor SYS_REFCURSOR;
+BEGIN
+  OPEN v_cursor FOR
+    SELECT P.product_id, P.title, P.description, P.price
+    FROM Products P
+    JOIN ProductShoppingCartItems PSI ON P.product_id = PSI.product_id
+    JOIN ShoppingCarts SC ON PSI.cart_id = SC.cart_id
+    WHERE SC.customer_id = p_customerId;
+  RETURN v_cursor;
+END GetProductsInCart;
+
+DECLARE
+  v_customerId NUMBER := 1;
+  v_products_cursor SYS_REFCURSOR;
+  v_product_id NUMBER;
+  v_title VARCHAR2(255);
+  v_description VARCHAR2(1000);
+  v_price NUMBER;
+BEGIN
+  v_products_cursor := GetProductsInCart(v_customerId);
+    LOOP
+    FETCH v_products_cursor INTO v_product_id, v_title, v_description, v_price;
+    EXIT WHEN v_products_cursor%NOTFOUND;
+
+    -- Process the product details as needed
+    DBMS_OUTPUT.PUT_LINE('Product ID: ' || v_product_id);
+    DBMS_OUTPUT.PUT_LINE('Title: ' || v_title);
+    DBMS_OUTPUT.PUT_LINE('Description: ' || v_description);
+    DBMS_OUTPUT.PUT_LINE('Price: ' || v_price);
+    DBMS_OUTPUT.PUT_LINE('---');
+  END LOOP;
+
+  -- Close the cursor
+  CLOSE v_products_cursor;
+END;
+
+-- Получение информации о заказах для заданного пользователя
+CREATE OR REPLACE FUNCTION GetOrdersForUser(p_customerId NUMBER)
+RETURN SYS_REFCURSOR
+IS
+  v_cursor SYS_REFCURSOR;
+BEGIN
+  OPEN v_cursor FOR
+    SELECT O.order_id, O.order_date, O.status
+    FROM Orders O
+    WHERE O.customer_id = p_customerId;
+  RETURN v_cursor;
+END GetOrdersForUser;
+
+-- Получение категории продукта по его идентификатору
+CREATE OR REPLACE FUNCTION GetProductCategory(p_productId NUMBER)
+RETURN VARCHAR2
+IS
+  v_categoryName VARCHAR2(50);
+BEGIN
+  SELECT PC.category_name
+  INTO v_categoryName
+  FROM Products P
+  JOIN ProductCategories PC ON P.category_id = PC.category_id
+  WHERE P.product_id = p_productId;
+  RETURN v_categoryName;
+END GetProductCategory;
+
+
+DECLARE
+  v_customerId NUMBER := 1; -- Replace with the desired customer ID
+  v_productId NUMBER := 2;  -- Replace with the desired product ID
+  v_orders_cursor SYS_REFCURSOR;
+  v_order_id NUMBER;  -- Replace with the actual datatype of order_id
+  v_order_date DATE;  -- Replace with the actual datatype of order_date
+  v_status VARCHAR2(50);  -- Replace with the actual datatype of status
+  v_product_category VARCHAR2(50);
+BEGIN
+  -- Call GetOrdersForUser function
+  v_orders_cursor := GetOrdersForUser(v_customerId);
+
+  -- Process the orders cursor
+  DBMS_OUTPUT.PUT_LINE('Orders for Customer ' || v_customerId || ':');
+  LOOP
+    FETCH v_orders_cursor INTO v_order_id, v_order_date, v_status;
+    EXIT WHEN v_orders_cursor%NOTFOUND;
+
+    -- Process order details as needed
+    DBMS_OUTPUT.PUT_LINE('Order ID: ' || v_order_id);
+    DBMS_OUTPUT.PUT_LINE('Order Date: ' || v_order_date);
+    DBMS_OUTPUT.PUT_LINE('Status: ' || v_status);
+    DBMS_OUTPUT.PUT_LINE('---');
+  END LOOP;
+
+  -- Close the cursor
+  CLOSE v_orders_cursor;
+
+  -- Call GetProductCategory function
+  v_product_category := GetProductCategory(v_productId);
+
+  -- Process the product category
+  DBMS_OUTPUT.PUT_LINE('Category for Product ' || v_productId || ': ' || v_product_category);
+END;
+/
+
+-- Добавление товара в корзину
+CREATE OR REPLACE PROCEDURE AddProductToCart(p_customerId NUMBER, p_productId NUMBER)
+IS
+  v_cartId NUMBER;
+BEGIN
+  SELECT cart_id
+  INTO v_cartId
+  FROM ShoppingCarts
+  WHERE customer_id = p_customerId;
+
+  IF v_cartId IS NOT NULL THEN
+    INSERT INTO ProductShoppingCartItems(cart_id, product_id)
+    VALUES (v_cartId, p_productId);
+  ELSE
+    RAISE_APPLICATION_ERROR(-20001, 'Shopping cart not found for the given customer.');
+  END IF;
+END AddProductToCart;
+  
+-- Создание нового заказа
+CREATE OR REPLACE PROCEDURE CreateOrder(p_customerId NUMBER, p_orderId NUMBER, p_orderDate DATE)
+IS
+BEGIN
+  INSERT INTO Orders( customer_id, order_date, order_id)
+  VALUES ( p_customerId, p_orderDate, p_orderId);
+END CreateOrder;
+
+-- Обновление информации о продукте
+CREATE OR REPLACE PROCEDURE UpdateProduct(p_productId NUMBER, p_newPrice NUMBER)
+IS
+BEGIN
+  UPDATE Products
+  SET price = p_newPrice
+  WHERE product_id = p_productId;
+END UpdateProduct;
+
+DECLARE
+  v_customerId NUMBER := 3; 
+  v_productId NUMBER := 2;  
+  v_orderId NUMBER := 1;  
+  v_orderDate DATE := SYSDATE;
+  v_newPrice NUMBER := 99.99; 
+
+BEGIN
+  -- Call AddProductToCart procedure
+  AddProductToCart(v_customerId, v_productId);
+
+  DBMS_OUTPUT.PUT_LINE('Product ' || v_productId || ' added to the cart for Customer ' || v_customerId);
+
+ -- Call UpdateProduct procedure
+  UpdateProduct(v_productId, v_newPrice);
+
+  DBMS_OUTPUT.PUT_LINE('Product ' || v_productId || ' updated with new price: ' || v_newPrice);
+  
+  -- Call CreateOrder procedure
+  CreateOrder(v_customerId, v_orderId, v_orderDate);
+
+  DBMS_OUTPUT.PUT_LINE('Order created for Customer ' || v_customerId);
+
+ 
+END;
+/
+
+
+INSERT INTO Orders (order_id, order_date, customer_id)
+SELECT 1, TO_TIMESTAMP('2015-12-25 15:32:06.427', 'YYYY-MM-DD HH24:MI:SS.FF'), 1 FROM DUAL UNION ALL
+SELECT 2, TO_TIMESTAMP('2014-12-25 15:32:06.427', 'YYYY-MM-DD HH24:MI:SS.FF'), 2 FROM DUAL UNION ALL
+SELECT 3, TO_TIMESTAMP('2016-12-25 15:32:06.427', 'YYYY-MM-DD HH24:MI:SS.FF'), 3 FROM DUAL
+

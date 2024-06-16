@@ -1,0 +1,374 @@
+
+-- Insert sample data into Employees table
+INSERT INTO Employees (employee_id, fio, email, password, address)
+VALUES 
+    (1, 'John Doe', 'john.doe@example.com', 'password123', '123 Main Street'),
+    (2, 'Jane Smith', 'jane.smith@example.com', 'password456', '456 Elm Street');
+
+-- Insert sample data into Check_list table
+INSERT INTO [DBShop].[dbo].[Check_list] ([client_id], [product_id], [quantity], [check_date])
+VALUES
+    (1, 1001, 2, '2022-01-01 09:00:00'),
+    (2, 1002, 1, '2022-01-02 08:30:00'),
+    (3, 1003, 3, '2022-01-03 10:15:00');
+
+	delete from [Check_list]
+
+-- Insert sample data into Products table
+INSERT INTO Products (product_id, title, description, price, category_id)
+VALUES 
+    (1, 'Product A', 'Description of Product A', 10.99, 1),
+    (2, 'Product B', 'Description of Product B', 19.99, 2),
+    (3, 'Product C', 'Description of Product C', 15.49, 1);
+
+-- Insert sample data into ShoppingCart table
+INSERT INTO ShoppingCart (cart_id, customer_id, amount)
+VALUES 
+    (1, 1, 2),
+    (2, 2, 1),
+    (3, 1, 3);
+
+	select * from ShoppingCart
+		select * from Products
+				select * from ProductShoppingCartItems
+
+INSERT INTO Products (product_id, title, description, price, category_id)
+VALUES 
+    (4, 'Product A', 'Description of Product A', 10.99, 1),
+    (5, 'Product B', 'Description of Product B', 19.99, 2),
+    (6, 'Product C', 'Description of Product C', 15.49, 1);
+
+	INSERT INTO ShoppingCart (cart_id, customer_id, amount)
+VALUES 
+    (6, 1, 2),
+    (4, 2, 1),
+    (5, 1, 3);
+
+	INSERT INTO ProductShoppingCartItems (cart_id, product_id)
+VALUES 
+    (4, 1),
+    (5, 2),
+    (6, 3),
+    (1, 1),
+    (2, 3);
+
+-- Insert sample data into ProductShoppingCartItems table
+INSERT INTO ProductShoppingCartItems (cart_id, product_id)
+VALUES 
+    (1, 1),
+    (1, 2),
+    (2, 3),
+    (3, 1),
+    (3, 3);
+
+	INSERT INTO ProductCategories (category_id, category_name)
+VALUES 
+    (1, 'Electronics'),
+    (2, 'Clothing'),
+    (3, 'Books'),
+    (4, 'Home Appliances');
+
+-- Insert sample data into Orders table
+INSERT INTO Orders (order_id, order_date, status, customer_id)
+VALUES 
+    (1, '2024-03-31 12:00:00', 'Pending', 1),
+    (2, '2024-03-30 13:30:00', 'Delivered', 1),
+    (3, '2024-03-31 14:45:00', 'Processing', 2);
+
+
+CREATE TABLE C (
+    employee_id INT PRIMARY KEY,
+    fio VARCHAR(100),
+    email VARCHAR(100),
+    password VARCHAR(150),
+    address VARCHAR(255)
+);
+
+CREATE TABLE Check_list (
+    check_id INT PRIMARY KEY,
+    employee_id INT,
+    check_date DATETIME,
+    FOREIGN KEY (employee_id) REFERENCES Employees(employee_id)
+);
+
+CREATE TABLE Products (
+    product_id INT PRIMARY KEY,
+    title VARCHAR(100),
+    description VARCHAR(300),
+    price FLOAT,
+    category_id INT,
+    FOREIGN KEY (category_id) REFERENCES ProductCategories(category_id)
+);
+
+
+
+Create TABLE ShoppingCart (
+    cart_id INT PRIMARY KEY,
+    customer_id INT,
+	amount INT,
+    FOREIGN KEY (customer_id) REFERENCES Employees(employee_id)
+);
+
+
+CREATE TABLE ProductShoppingCartItems (
+    cart_id INT,
+    product_id INT,
+    FOREIGN KEY (cart_id) REFERENCES ShoppingCart(cart_id),
+    FOREIGN KEY (product_id) REFERENCES Products(product_id)
+);
+---
+
+CREATE TABLE Orders (
+    order_id INT PRIMARY KEY,
+    order_date DATETIME,
+    status VARCHAR(50),
+    customer_id INT,
+    FOREIGN KEY (customer_id) REFERENCES Employees(customer_id)
+);
+
+CREATE TABLE ProductCategories (
+    category_id INT PRIMARY KEY,
+    category_name VARCHAR(50)
+);
+----Вычисление итогов работы продавцов помесячно, за квартал, за полгода, за год.
+
+
+
+SELECT 
+    employee_id,
+    SUM(Count_of) AS Total_Count_of,
+    SUM(General) AS Total_General,
+    SUM(Maximum) AS Total_Maximum
+FROM (
+    SELECT 
+        Product_list.product_name, 
+        Employees.employee_id, 
+        SUM(ShoppingCart.amount) AS Count_of,
+        SUM(ShoppingCart.amount) OVER() / SUM(ShoppingCart.amount) OVER(PARTITION BY Product_list.product_name) AS General,
+        SUM(ShoppingCart.amount) OVER() / MAX(SUM(ShoppingCart.amount)) OVER(PARTITION BY Product_list.product_name ORDER BY SUM(ShoppingCart.amount)) AS Maximum
+    FROM 
+        Employees
+    JOIN 
+        Check_list ON Employees.employee_id = Check_list.client_id
+    JOIN 
+        ShoppingCart ON ShoppingCart.customer_id = Check_list.client_id
+    JOIN 
+        ProductShoppingCartItems ON ProductShoppingCartItems.cart_id = ShoppingCart.cart_id
+    JOIN 
+        Products ON Products.product_id = ProductShoppingCartItems.product_id
+    JOIN 
+        Product_list ON Product_list.product_id = Products.product_id
+    GROUP BY 
+        Product_list.product_name, Employees.employee_id, ShoppingCart.amount
+) AS subquery
+GROUP BY 
+    employee_id;
+
+
+
+--SELECT 
+--    Product_list.product_name, 
+--    Employees.employee_id, 
+--    SUM(ShoppingCart.amount) AS Count_of,
+--    SUM(ShoppingCart.amount) OVER() / SUM(ShoppingCart.amount) OVER(PARTITION BY Product_list.product_name) AS General,
+--    SUM(ShoppingCart.amount) OVER() / MAX(SUM(ShoppingCart.amount)) OVER(PARTITION BY Product_list.product_name ORDER BY SUM(ShoppingCart.amount)) AS Maximum
+--FROM 
+--    Employees
+--JOIN 
+--    Check_list ON Employees.employee_id = Check_list.client_id
+--JOIN 
+--    ShoppingCart ON ShoppingCart.customer_id = Check_list.client_id
+--JOIN 
+--    ProductShoppingCartItems ON ProductShoppingCartItems.cart_id = ShoppingCart.cart_id
+--JOIN 
+--    Products ON Products.product_id = ProductShoppingCartItems.product_id
+--JOIN 
+--    Product_list ON Product_list.product_id = Products.product_id
+--GROUP BY 
+--    Product_list.product_name, Employees.employee_id, ShoppingCart.amount;
+
+
+
+
+INSERT INTO [DBShop].[dbo].[Product_list] ([product_name], [price], [expiration_date], [category_id], [supplier_id])
+VALUES 
+    ('Product A', 10.99, '2025-01-01', 1, 1),
+    ('Product B', 19.99, '2024-12-31', 2, 2),
+    ('Product C', 15.49, '2025-06-30', 1, 1);
+SELECT * 
+FROM  
+    Employees
+JOIN 
+    Check_list ON Employees.employee_id = Check_list.client_id
+JOIN 
+    ShoppingCart ON ShoppingCart.customer_id = Check_list.client_id
+JOIN 
+    ProductShoppingCartItems ON ProductShoppingCartItems.cart_id = ShoppingCart.cart_id
+JOIN 
+    Products ON Products.product_id = ProductShoppingCartItems.product_id
+JOIN 
+    Product_list ON Product_list.product_id = Products.product_id;
+
+
+
+	select * from ShoppingCart
+		select * from Check_list
+	select * from Products
+			select * from Product_list
+		select * from Check_list
+		select * from Check_list
+
+	select * from Employees
+
+
+
+	 SELECT 
+    Employees.employee_id,
+    Employees.fio,
+    SUM(Products.price * ShoppingCart.amount) AS total_sales,
+    SUM(Products.price * ShoppingCart.amount) / total_monthly_sales.total_sales * 100 AS sales_percentage,
+    CASE 
+        WHEN total_monthly_sales.max_sales = 0 THEN 0 
+        ELSE SUM(Products.price * ShoppingCart.amount) / total_monthly_sales.max_sales * 100 
+    END AS sales_to_max_percentage
+FROM 
+    Employees
+JOIN 
+    Check_list ON Employees.employee_id = Check_list.client_id
+JOIN 
+    ShoppingCart ON ShoppingCart.customer_id = Check_list.client_id
+JOIN 
+    ProductShoppingCartItems ON ProductShoppingCartItems.cart_id = ShoppingCart.cart_id
+JOIN 
+    Products ON Products.product_id = ProductShoppingCartItems.product_id
+JOIN 
+    (
+        SELECT 
+            SUM(Products.price * ShoppingCart.amount) AS total_sales,
+            MAX(SUM(Products.price * ShoppingCart.amount)) OVER() AS max_sales
+        FROM 
+            Check_list
+        JOIN 
+            ShoppingCart ON ShoppingCart.customer_id = Check_list.client_id
+        JOIN 
+            ProductShoppingCartItems ON ProductShoppingCartItems.cart_id = ShoppingCart.cart_id
+        JOIN 
+            Products ON Products.product_id = ProductShoppingCartItems.product_id
+        WHERE 
+            YEAR(Check_list.check_date) = 2024 AND MONTH(Check_list.check_date) = 3 -- Adjust the period as needed
+    ) AS total_monthly_sales ON 1=1
+GROUP BY 
+    Employees.employee_id, Employees.fio, total_monthly_sales.total_sales, total_monthly_sales.max_sales;
+
+	-- 5.	Продемонстрируйте применение функции ранжирования ROW_NUMBER() для разбиения результатов запроса на страницы (по 20 строк на каждую страницу).
+
+	WITH NumberedRows AS (
+    SELECT 
+        employee_id, 
+        fio, 
+        email, 
+        password, 
+        address,
+        ROW_NUMBER() OVER (ORDER BY employee_id) AS RowNum
+    FROM 
+        Employees
+)
+SELECT 
+    employee_id, 
+    fio, 
+    email, 
+    password, 
+    address
+FROM 
+    NumberedRows
+WHERE 
+    RowNum BETWEEN 1 AND 20; -- Первая страница, измените значения, чтобы получить другие страницы
+
+--6.	Продемонстрируйте применение функции ранжирования ROW_NUMBER() для удаления дубликатов.
+WITH DeduplicatedRows AS (
+    SELECT 
+        employee_id, 
+        fio, 
+        email, 
+        password, 
+        address,
+        ROW_NUMBER() OVER (PARTITION BY email ORDER BY employee_id) AS RowNum
+    FROM 
+        Employees
+)
+SELECT 
+    employee_id, 
+    fio, 
+    email, 
+    password, 
+    address
+FROM 
+    DeduplicatedRows
+WHERE 
+    RowNum = 1;
+
+	INSERT INTO Employees (employee_id, fio, email, password, address)
+VALUES 
+    (4, 'John Doe', 'john.doe@example.com', 'password123', '123 Main Street'),
+    (5, 'Jane Smith', 'jane.smith@example.com', 'password456', '456 Elm Street'),
+    (6, 'Alice Johnson', 'john.doe@example.com', 'password789', '789 Oak Avenue');
+
+-- Вставка данных без дубликатов
+INSERT INTO Employees (employee_id, fio, email, password, address)
+VALUES 
+    (7, 'Bob Brown', 'bob.brown@example.com', 'password987', '987 Pine Street'),
+    (8, 'Eva Lee', 'eva.lee@example.com', 'password654', '654 Cedar Avenue');
+
+	WITH NumberedRows AS (
+    SELECT 
+        employee_id, 
+        fio, 
+        email, 
+        password, 
+        address,
+        ROW_NUMBER() OVER (PARTITION BY email ORDER BY employee_id) AS RowNum
+    FROM 
+        Employees
+)
+SELECT 
+    employee_id, 
+    fio, 
+    email, 
+    password, 
+    address,
+    RowNum
+FROM 
+    NumberedRows;
+
+	--1	Магазин	Вернуть для каждого клиента суммы последних 6 заказов
+	DECLARE @name VARCHAR(100) = 'alexey';
+
+WITH LatestOrders AS (
+    SELECT 
+        c.name AS client_name,
+        e.name AS employee_name,
+        SUM(sc.amount * p.product_cost) OVER (PARTITION BY c.client_id ORDER BY cl.check_date DESC ROWS BETWEEN CURRENT ROW AND 5 FOLLOWING) AS LastSixOrdersSum
+    FROM 
+        Check_list cl
+    JOIN 
+        Employees e ON cl.client_id = e.employee_id
+    JOIN 
+         VVZZZ ON cl.client_id = c.client_id
+    JOIN 
+        ShoppingCart sc ON cl.cart_id = sc.cart_id
+    JOIN 
+        ProductShoppingCartItems psci ON sc.cart_id = psci.cart_id
+    JOIN 
+        Products p ON psci.product_id = p.product_id
+)
+SELECT TOP(1) 
+    client_name, 
+    employee_name, 
+    LastSixOrdersSum 
+FROM 
+    LatestOrders 
+WHERE 
+    client_name = @name 
+ORDER BY 
+    LastSixOrdersSum DESC;
+

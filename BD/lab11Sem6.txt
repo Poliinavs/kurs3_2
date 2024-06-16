@@ -1,0 +1,184 @@
+CREATE TABLE Report (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    xml_inf XML
+);
+delete Report;
+drop table Report;
+select * from Report;
+
+
+Create TABLE Products (
+    ProductID INT PRIMARY KEY,
+    Name NVARCHAR(100),
+    Price DECIMAL(10, 2),
+    Category NVARCHAR(50)
+);
+
+-- Table "Orders"
+CREATE TABLE Orders (
+    OrderID INT PRIMARY KEY,
+    OrderDate DATE,
+    ProductID INT FOREIGN KEY REFERENCES Products(ProductID),
+    Quantity INT
+);
+
+-- Table "Customers"
+CREATE TABLE Customers (
+    CustomerID INT PRIMARY KEY,
+    FirstName NVARCHAR(50),
+    LastName NVARCHAR(50),
+    Email NVARCHAR(100),
+    Phone NVARCHAR(20)
+);
+
+INSERT INTO Products (ProductID, Name, Price, Category)
+VALUES 
+    (1, 'T-shirt', 15.99, 'Clothing'),
+    (2, 'Jeans', 29.99, 'Clothing'),
+    (3, 'Sneakers', 49.99, 'Shoes');
+
+-- Вставка данных в таблицу "Orders"
+INSERT INTO Orders (OrderID, OrderDate, ProductID, Quantity)
+VALUES 
+    (1, '2024-04-30', 1, 2),
+    (2, '2024-05-01', 2, 1),
+    (3, '2024-05-02', 3, 1);
+
+-- Вставка данных в таблицу "Customers"
+INSERT INTO Customers (CustomerID, FirstName, LastName, Email, Phone)
+VALUES 
+    (1, 'John', 'Doe', 'john.doe@example.com', '123-456-7890'),
+    (2, 'Jane', 'Smith', 'jane.smith@example.com', '987-654-3210');
+
+
+CREATE OR ALTER PROCEDURE GenerateXMLReportAndInsert
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @xml XML;
+    DECLARE @timestamp DATETIME2 = GETDATE(); 
+
+    SELECT @xml = (
+        SELECT
+            @timestamp AS 'Timestamp',
+            (
+                SELECT
+                    c.CustomerID AS '@CustomerID',
+                    c.FirstName,
+                    c.LastName,
+                    c.Email AS CustomerEmail,
+                    c.Phone AS CustomerPhone,
+                    (
+                        SELECT
+                            p.ProductID AS '@ProductID',
+                            p.Name AS ProductName,
+                            p.Price AS ProductPrice,
+                            p.Category AS ProductCategory,
+                            (
+                                SELECT
+                                    o.OrderID AS '@OrderID',
+                                    o.OrderDate AS OrderDateTime,
+                                    (
+                                        SELECT
+                                            pd.Category,
+                                            pd.Price 
+                                        FROM
+                                            Products pd
+                                        FOR XML PATH('Product'), TYPE
+                                    )
+                                FROM
+                                    Orders o
+                                    INNER JOIN Products op ON o.ProductID = op.ProductID
+                                FOR XML PATH('Order'), TYPE
+                            )
+                        FROM
+                            Products p
+                        WHERE
+                            EXISTS (
+                                SELECT 1
+                                FROM Orders op
+                                WHERE op.ProductID = p.ProductID
+                            )
+                        FOR XML PATH('Product'), TYPE
+                    )
+                FROM
+                    Customers c
+                WHERE
+                    EXISTS (
+                        SELECT 1
+                        FROM Orders o
+                        WHERE o.OrderID = c.CustomerID
+                    )
+                FOR XML PATH('Customer'), TYPE
+            )
+        FROM
+            Orders o
+        FOR XML PATH('Report'), TYPE
+    );
+
+    INSERT INTO Report (xml_inf)
+    VALUES (@xml);
+
+    PRINT 'XML generate';
+END;
+
+drop procedure GenerateXMLReportAndInsert;
+EXEC GenerateXMLReportAndInsert;
+
+select * from Report
+
+
+
+CREATE PRIMARY XML INDEX IndexReport_inf ON Report(xml_inf);
+SELECT xml_inf
+FROM Report
+WHERE id = 1
+OPTION (XML ON);
+
+
+CREATE OR ALTER PROCEDURE ExtractXMLValues
+    @element_name NVARCHAR(100)
+AS
+BEGIN
+    DECLARE @xml XML;
+
+    SELECT @xml = xml_
+    FROM Report;
+
+    SELECT 
+        @xml.value('(//Timestamp)[1]', 'DATETIME2') AS Timestamp,
+        C.value('@CustomerID', 'INT') AS CustomerID,
+        C.value('(FirstName)[1]', 'NVARCHAR(MAX)') AS FirstName,
+        C.value('(LastName)[1]', 'NVARCHAR(MAX)') AS LastName,
+        C.value('(CustomerEmail)[1]', 'NVARCHAR(MAX)') AS CustomerEmail,
+        C.value('(CustomerPhone)[1]', 'NVARCHAR(MAX)') AS CustomerPhone,
+        P.value('@ProductID', 'INT') AS ProductID,
+        P.value('(ProductName)[1]', 'NVARCHAR(MAX)') AS ProductName,
+        P.value('(ProductPrice)[1]', 'DECIMAL(10, 2)') AS ProductPrice,
+        P.value('(ProductCategory)[1]', 'NVARCHAR(MAX)') AS ProductCategory,
+        O.value('@OrderID', 'INT') AS OrderID,
+        O.value('(OrderDateTime)[1]', 'DATETIME') AS OrderDateTime,
+        O.value('(OrderServiceAddress)[1]', 'NVARCHAR(MAX)') AS OrderServiceAddress,
+        PP.value('(Category)[1]', 'NVARCHAR(MAX)') AS ProductOrderedCategory,
+        PP.value('(Price)[1]', 'DECIMAL(10, 2)') AS ProductOrderedPrice,
+        Pay.value('@PaymentID', 'INT') AS PaymentID,
+        Pay.value('(PaymentAmount)[1]', 'DECIMAL(10, 2)') AS PaymentAmount,
+        Pay.value('(PaymentDateTime)[1]', 'DATETIME') AS PaymentDateTime
+    FROM 
+        @xml.nodes('/Report/Customer') AS T1(C)
+    CROSS APPLY 
+        T1.C.nodes('Product') AS T2(P)
+    CROSS APPLY 
+        T2.P.nodes('Order') AS T3(O)
+    OUTER APPLY 
+        T3.O.nodes('Product') AS T4(PP)
+    OUTER APPLY 
+        T3.O.nodes('Payment') AS T5(Pay);
+END;
+
+EXEC ExtractXMLValues '/Report';
+
+
+
+

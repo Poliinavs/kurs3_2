@@ -1,0 +1,37 @@
+create tablespace lab10TableSapce
+    datafile 'log.tb.dbf'
+    size 1000m
+    autoextend on next 100m;
+
+create user lab10User identified by 12345
+    default tablespace lab10TableSapce
+    temporary tablespace temp
+    quota unlimited on lab10TableSapce
+    account unlock;
+
+grant connect, resource to lab10User;
+grant create session to lab10User;
+grant create table to lab10User;
+
+CREATE TABLE LOBLOB 
+(
+  IDLOB NUMBER(5) PRIMARY KEY,
+  CCC CLOB,
+  BBB BLOB,
+  FFF BFILE
+);
+
+SELECT * FROM LOBLOB
+DELETE FROM LOBLOB
+CREATE DIRECTORY LOBDIR AS 'C:/BFILE';
+
+INSERT INTO LOBLOB VALUES (1, 'HELLO CLOB', NULL, NULL);
+
+INSERT INTO LOBLOB VALUES (3, NULL, NULL, BFILENAME('LOBDIR', 'CV_Avsiukevich_c#.PDF'));
+INSERT INTO LOBLOB VALUES (4, NULL, NULL, BFILENAME('LOBDIR', 'images.jpg'));
+
+
+
+
+SELECT * FROM LOBLOB;
+

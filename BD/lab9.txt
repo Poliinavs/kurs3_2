@@ -1,0 +1,117 @@
+-----------------------------------
+a.	Создать коллекцию на основе t1, далее K1, для нее как атрибут – вложенную коллекцию на основе t2, далее К2;
+select * from products
+select * from orders
+
+
+DECLARE
+    TYPE product_type IS RECORD (
+        Product_ID INT,
+        Title NVARCHAR2(100),
+        Description NVARCHAR2(255),
+        Price NUMBER(10, 2),
+        Category_ID INT
+    );
+    TYPE k1_type IS TABLE OF product_type INDEX BY PLS_INTEGER;
+    k1 k1_type;
+
+
+    TYPE order_type IS RECORD (
+        Order_ID INT,
+        Customer_Id INT,
+        Order_Date TIMESTAMP,
+        Status NVARCHAR2(255)
+    );
+    TYPE k2_type IS TABLE OF order_type INDEX BY PLS_INTEGER;
+    k2 k2_type;
+
+    v_index PLS_INTEGER;
+    v_product_id INT := 1; -- Произвольный ServiceID для проверки
+    v_exists BOOLEAN := FALSE;
+    v_empty_collections PLS_INTEGER := 0;
+BEGIN
+    -- Bulk заполнение коллекции K1 на основе таблицы Services
+    SELECT 
+            Product_ID ,
+        Title,
+        Description,
+        Price,
+        Category_ID 
+      BULK COLLECT INTO k1
+    FROM products;
+
+    -- Bulk заполнение коллекции K2 на основе таблицы Orders
+    SELECT 
+         Order_ID,
+        Customer_Id,
+        Order_Date ,
+        Status 
+     BULK COLLECT INTO k2
+    FROM orders;
+
+   -- Просмотр содержимого коллекции K1
+FOR i IN 1..k1.COUNT LOOP
+    DBMS_OUTPUT.PUT_LINE('Product_ID: ' || k1(i).Product_ID || ', Title: ' || k1(i).Title || ', Description: ' || k1(i).Description || ', Price: ' || k1(i).Price || ', Category_ID: ' || k1(i).Category_ID);
+END LOOP;
+
+-- Просмотр содержимого коллекции K2
+FOR i IN 1..k2.COUNT LOOP
+    DBMS_OUTPUT.PUT_LINE('Order_ID: ' || k2(i).Order_ID || ', Customer_Id: ' || k2(i).Customer_Id || ', Order_Date: ' || k2(i).Order_Date || ', Status: ' || k2(i).Status);
+END LOOP;
+
+   -- Проверка существования элемента в коллекции K1
+FOR i IN 1..k1.COUNT LOOP
+    IF k1(i).Product_ID = v_product_id THEN
+        v_exists := TRUE;
+        EXIT; -- Выход из цикла, если элемент найден
+    END IF;
+END LOOP;
+
+-- Вывод результата проверки
+IF v_exists THEN
+    DBMS_OUTPUT.PUT_LINE('Элемент с Product_ID ' || v_product_id || ' является членом коллекции K1');
+ELSE
+    DBMS_OUTPUT.PUT_LINE('Элемент с Product_ID ' || v_product_id || ' не является членом коллекции K1');
+END IF;
+
+-- Поиск пустых коллекций К1
+IF k1.COUNT = 0 THEN
+    DBMS_OUTPUT.PUT_LINE('Пустых коллекций К1 не найдено');
+ELSE
+    DBMS_OUTPUT.PUT_LINE('Найдено ' || k1.COUNT || ' пустых коллекций К1');
+END IF;
+
+-- Вставка данных из коллекции k1 в таблицу TableServices
+FORALL i IN 1..k1.COUNT
+    INSERT INTO TableProducts (Product_ID, Title, Description, Price, Category_ID)
+    VALUES (k1(i).Product_ID, k1(i).Title, k1(i).Description, k1(i).Price, k1(i).Category_ID);
+
+-- Вставка данных из коллекции k2 в таблицу TableOrders
+FORALL i IN 1..k2.COUNT
+    INSERT INTO TableOrders (Order_ID, Customer_Id, Order_Date, Status)
+    VALUES (k2(i).Order_ID, k2(i).Customer_Id, k2(i).Order_Date, k2(i).Status);
+    
+    COMMIT;
+END;
+/
+select * from TableProducts;
+select * from TableOrders;
+
+drop table TableProducts;
+drop table TableOrders;
+CREATE TABLE TableProducts (
+   Product_ID INT,
+        Title NVARCHAR2(100),
+        Description NVARCHAR2(255),
+        Price NUMBER(10, 2),
+        Category_ID INT
+);
+
+CREATE TABLE TableOrders (
+     Order_ID INT,
+        Customer_Id INT,
+        Order_Date TIMESTAMP,
+        Status NVARCHAR2(255)
+);
+
+

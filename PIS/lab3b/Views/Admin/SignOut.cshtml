@@ -1,0 +1,7 @@
+﻿<div class="min-vw-100 d-flex flex-column align-items-center justify-content-center">
+    <form class="d-flex flex-column gap-3 w-50 border rounded border-danger bg-light p-3" method="post" action="/Admin/SignOut">
+        <button type="submit" class="btn btn-danger btn-block">Sign Out</button>
+
+        @await Html.PartialAsync("ErrorsBlock")
+    </form>
+</div>

@@ -1,0 +1,55 @@
+﻿@model AssignRoleModel
+
+<div class="min-vw-100 d-flex flex-column align-items-center justify-content-center">
+    <h1 class="h1">Assign role</h1>
+    <div class="w-100 d-flex flex-column gap-3 border border-1 rounded-2">
+        @foreach (var user in Model.Users)
+        {
+            <div class="user d-flex w-100 gap-5 p-2">
+                <div style="width: 200px" class="text-black">
+                    @user.UserName
+                </div>
+
+                @foreach(var role in Model.Roles)
+                {
+                    <div class="d-flex gap-2 align-items-center">
+                        <label>@role.Name</label>
+                        @if (user.Roles.Contains(role.Name))
+                        {
+                            <input type="checkbox" class="role-@role.Id" checked onclick="assignRole('@user.Id', '@role.Id')" />
+                        }
+                        else 
+                        {
+                            <input type="checkbox" class="role-@role.Id" onclick="assignRole('@user.Id', '@role.Id')" />
+                        }
+                    </div>
+                }
+            </div>
+            <hr/>
+        }
+    </div>
+</div>
+
+<script>
+    async function assignRole(userId, roleId) {
+        try {
+            const formData = new FormData();
+
+            formData.append("userId", userId);
+            formData.append("roleId", roleId);
+
+            const response = await fetch(`/Admin/Assign`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok)
+                return;
+        } catch (e) {
+            alert('Fail')
+        }
+
+        const checkbox = document.querySelector(`input.role-${roleId}`);
+        checkbox.checked = !checkbox.checked;
+    }
+</script>

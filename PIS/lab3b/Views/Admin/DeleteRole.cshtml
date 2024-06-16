@@ -1,0 +1,18 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model IEnumerable<string>
+
+<div class="min-vw-100 d-flex flex-column align-items-center justify-content-center">
+    <h1 class="h1">Delete user</h1>
+    <form class="d-flex flex-column gap-3 w-75 border-1 rounded-2 border bg-opacity-25 p-3" method="post" action="/Admin/DeleteRole">
+        <select class="form-select" name="roleName">
+            @foreach (var role in Model)
+            {
+                <option>@role</option>
+            }
+        </select>
+
+        <button type="submit" class="btn btn-danger">Delete</button>
+
+        @await Html.PartialAsync("ErrorsBlock")
+    </form>
+</div>

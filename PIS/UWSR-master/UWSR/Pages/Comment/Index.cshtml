@@ -1,0 +1,54 @@
+﻿@page
+@model Lab7.Pages.Comment.IndexModel
+@using Lab7.Utils
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Comment</h1>
+<form method="post">
+    @if (Security.CheckIsAdmin(this.HttpContext))
+    {
+        <button type="submit" class="btn btn-primary" asp-page-handler="ClearCookies">Logout</button>
+    }
+</form>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+SessionId            </th>
+            <th>
+Time            </th>
+            <th>
+Comment            </th>
+            <th></th>
+        </tr>
+    </thead>
+    
+    <tbody>
+        
+@foreach (var item in Model.Comment) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.SessionId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Stamp)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Text)
+            </td>
+            <td>
+                    @if (Security.CheckIsAdmin(this.HttpContext) || Security.CheckIsCommentUser(this.HttpContext, item))
+                    {
+                        <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a>;
+                        <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>;
+                        
+                    }
+                   
+                <a asp-page="./Details" asp-route-id="@item.Id">Details</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

@@ -1,0 +1,28 @@
+﻿
+@{
+    float? x = ViewBag.x ,  y = ViewBag.y , z = ViewBag.z;
+    string action = "Sum";
+    string press = (string)ViewBag.press;
+    switch (press)
+    {
+        case "+": action = "Sum";   break;     
+        case "-": action = "Sub";   break;
+        case "*": action = "Mul";   break;
+        case "/": action = "Div";   break;
+        default:  action = "Index"; break;
+    }
+}
+
+    @await Html.PartialAsync("_CalcLink")
+
+    @if (!String.IsNullOrEmpty(press))
+    {
+        @using (Html.BeginForm(action, "Calc", FormMethod.Post))
+        {
+            <p class="d-flex gap-2">
+                @await Html.PartialAsync("_Calc")
+                <input type="submit" name="press" value="@press" />
+            </p>
+            <p>   @((string)ViewBag.Error)  </p>
+        }
+    }

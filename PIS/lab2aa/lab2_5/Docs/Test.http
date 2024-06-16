@@ -1,0 +1,43 @@
+@hostname = localhost
+@port = 5071
+
+###
+GET http://{{hostname}}:{{port}}/Parm/Index
+###
+GET http://{{hostname}}:{{port}}/Parm/Index/1
+###
+GET http://{{hostname}}:{{port}}/Parm/Index/ddd
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri01
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri01/1
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri01/x1
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri02
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri02/1
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri02/x1
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri03
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri03/1
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri03/x1
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri03/1.222
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri03/12.22
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri04
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri04/1
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri04/x1
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri04/1.222
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri04/2023.01.02
+###
+GET http://{{hostname}}:{{port}}/Parm/Uri04/2023.01.02%2014:00:33

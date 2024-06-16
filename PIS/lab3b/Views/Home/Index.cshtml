@@ -1,0 +1,20 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    @if (ViewBag.IsAuthorized == true)
+    {
+        <p>
+            <strong>Username:</strong> @ViewBag.Username
+        </p>
+        <p>
+            <strong>Roles:</strong> <span class="badge bg-primary">
+                @foreach (var role in ViewBag.Roles)
+                {
+                    <span class="badge bg-secondary">@role</span>
+                }
+            </span>
+        </p>
+    }
+</div>

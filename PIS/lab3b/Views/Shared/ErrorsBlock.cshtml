@@ -1,0 +1,9 @@
+﻿@if (ViewBag.Errors is not null)
+{
+    <div class="d-flex flex-column gap-2">
+        @foreach (var e in ViewBag.Errors)
+        {
+            <span class="text-black-50 bg-danger rounded-2 bg-opacity-10 p-2">@e</span>
+        }
+    </div>
+}

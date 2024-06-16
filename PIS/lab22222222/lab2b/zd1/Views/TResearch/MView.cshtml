@@ -1,0 +1,82 @@
+﻿@*  [
+        HttpGet,
+        Route("/MResearch/M01/1"),
+        Route("/MResearch/M01"),
+        Route("/MResearch"),
+        Route("/"),
+        Route("/V2/MResearch/M01"),
+        Route("/V3/MResearch/{str}/M01")
+    ]
+    public IActionResult M01(string? str)
+    {
+        return Ok($"GET:M01 {(str is not null ? $"| string - {str}" : "")}");
+    }
+
+    [
+        HttpGet,
+        Route("/V2"),
+        Route("/V2/MResearch"),
+        Route("/V2/MResearch/M02"),
+        Route("/MResearch/M02"),
+        Route("/V3/MResearch/{str}/M02")
+    ]
+    public IActionResult M02(string? str)
+    {
+        return Ok($"GET:M02 {(str is not null ? $"| string - {str}" : "")}");
+    }
+    [
+        HttpGet,
+        Route("/V3"),
+        Route("/V3/MResearch/{str}"),
+        Route("/V3/MResearch/{str}/M03")
+    ]
+    public IActionResult M03(string? str)
+    {
+        return Ok($"GET:M03 {(str is not null ? $"| string - {str}" : "")}");
+    }
+    // ЗАПРОСЫ
+ *@
+<div class="d-flex flex-column gap-2 p-2 m-2">
+    <a class="link-info" href="/MResearch/M01/1">/MResearch/M01/1</a></br>
+    <a class="link-info" href="/MResearch/M01">/MResearch/M01</a></br>
+    <a class="link-info" href="/MResearch">/MResearch</a></br>
+    <a class="link-info" href="/">/</a></br>
+    <a class="link-info" href="/V2/MResearch/M01">/V2/MResearch/M01</a></br>
+    <a class="link-info" href="/V3/MResearch/str/M01">/V3/MResearch/str/M01</a></br>
+    <hr />
+    <a class="link-info" href="/V2">/V2</a></br>
+    <a class="link-info" href="/V2/MResearch">/V2/MResearch</a></br>
+    <a class="link-info" href="/V2/MResearch/M02">/V2/MResearch/M02</a></br>
+    <a class="link-info" href="/MResearch/M02">/MResearch/M02</a></br>
+    <a class="link-info" href="/V3/MResearch/str/M02">/V3/MResearch/str/M02</a></br>
+    <hr />
+    <a class="link-info" href="/V3">/V3</a></br>
+    <a class="link-info" href="/V3/MResearch/str">/V3/MResearch/str</a></br>
+    <a class="link-info" href="/V3/MResearch/str/M03">/V3/MResearch/str/M03</a></br>
+    <hr />
+    <a class="link-info random-link"></a><br />
+</div>
+
+<script>
+    const randomLink = document.querySelector('.random-link');
+    let randomUrl = '';
+
+    const randomValue = Math.round(Math.random() * 10);
+
+    for (let i = 0; i < randomValue; i++) {
+        randomUrl += '/' + stringGenerator(10);
+    }
+
+    randomLink.innerText = randomUrl;
+    randomLink.href = randomUrl;
+
+    function stringGenerator(length) {
+        var result = '';
+        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for (var i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
+</script>

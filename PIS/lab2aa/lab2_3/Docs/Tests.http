@@ -1,0 +1,11 @@
+﻿@hostname=localhost
+@port=5177
+###
+GET http://{{hostname}}:{{port}}/Start/One
+###
+GET http://{{hostname}}:{{port}}/Start/Two
+###
+GET http://{{hostname}}:{{port}}/Start/Three
+
+###
+GET https://www.belstu.by

@@ -1,0 +1,87 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<User> SignInManager
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lab3b_vd.styles.css" asp-append-version="true" />
+    <style>
+        /* Add your custom styles here */
+
+        /* Navbar styles */
+        .navbar {
+            background-color: #f8f9fa; /* Light gray background */
+            border-bottom: 1px solid #dee2e6; /* Gray border */
+        }
+
+        .navbar-brand {
+            color: #007bff; /* Blue color for the brand */
+            font-weight: bold; /* Bold font weight */
+        }
+
+        .navbar-nav .btn-link {
+            color: #007bff; /* Blue color for the links */
+            text-decoration: none; /* Remove underlines */
+            margin-right: 10px; /* Add margin between links */
+        }
+
+            .navbar-nav .btn-link:hover {
+                text-decoration: underline; /* Underline on hover */
+            }
+
+        /* Container styles */
+        .container {
+            padding-top: 20px; /* Add padding to the top */
+        }
+    </style>
+</head>
+<body class="min-vw-100 d-flex flex-column gap-5">
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid d-flex justify-content-between">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index"></a>
+                <div class="d-flex gap-3">
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        @if (User.IsInRole("Administrator"))
+                        {
+                            <a class="btn-link" href="/Admin/CreateUser">Create User</a>
+                            <a class="btn-link" href="/Admin/DeleteUser">Delete User</a>
+                            <a class="btn-link" href="/Admin/CreateRole">Create Role</a>
+                            <a class="btn-link" href="/Admin/DeleteRole">Delete Role</a>
+                            <a class="btn-link" href="/Admin/Assign">Assign Role</a>
+                        }
+
+                        @if (User.IsInRole("Employee") || User.IsInRole("Master"))
+                        {
+                            <a class="btn btn-primary" href="/Calc">Calc</a>
+                        }
+
+                        <a class="btn-link" href="/Admin/ChangePassword">Change password</a>
+                        <a class="btn-link" href="/Admin/SignOut">Sign out</a>
+                    }
+                    else
+                    {
+                        <a class="btn-link" href="/Admin/SignIn">Login</a>
+                        <a class="btn-link" href="/Admin/Register">Register</a>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

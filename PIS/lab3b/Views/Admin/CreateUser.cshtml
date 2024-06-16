@@ -1,0 +1,16 @@
+﻿<div class="min-vw-100 d-flex flex-column align-items-center justify-content-center">
+    <h1 class="h1">Create user</h1>
+    <form class="d-flex flex-column gap-3 w-75 border-1 rounded-2 border bg-opacity-25 p-3" method="post" action="/Admin/CreateUser">
+        <div class="w-100 d-flex gap-2">
+            <label class="text-black w-25">Username:</label>
+            <input class="form-control" name="username" value="@ViewBag.Username" />
+        </div>
+        <div class="w-100 d-flex gap-2">
+            <label class="text-black w-25">Password:</label>
+            <input class="form-control" name="password" value="@ViewBag.Password" />
+        </div>
+        <button type="submit" class="btn btn-success">Submit</button>
+
+        @await Html.PartialAsync("ErrorsBlock")
+    </form>
+</div>

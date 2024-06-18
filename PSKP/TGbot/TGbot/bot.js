@@ -1,9 +1,7 @@
 const request = require('request');
 const TelegramBot = require('node-telegram-bot-api');
-const token = '6950033328:AAEQI_V9DbilPK-Bxek_IGVxXoijOna75NQ';
 const bot = new TelegramBot(token, { polling: true });
-const CatImgAPI_KEY = "live_UjP8C4WO6HYxlI1TKFpmfU5L0rGrOT7qpWMpIxnvjHnHAOBADF6zhIb2cUp41Vzo";
-const WheatherApiKey = "fVEJ0LT1W00wcZGXMl/ovg==vYtwZpVHObKoYaOM"
+
 const axios = require('axios');
 const prismaClient = require('./prisma/Clients')
 
@@ -14,7 +12,6 @@ bot.onText('', async (msg) => {
 
 
     if (msg.text.toLowerCase() === 'привет') {
-        const stickerFileId = 'CAACAgIAAxkBAAEExz5mH34cpHUgetKZoFa_-vOnXrMCGgAC0hIAAgs7EUoX9mrZuPDznzQE'; // Укажите здесь реальный file_id стикера
         bot.sendSticker(chatId, stickerFileId).catch(error => {
             console.error(error); // В случае возникновения ошибки выведем её в консоль
         });
@@ -22,7 +19,6 @@ bot.onText('', async (msg) => {
     if (msg.text.toLowerCase() === '/weather'){
         const apiKey = 'c7f6ee8d23ce6d1074e9b71bd025dbcf';
         const cityName = 'Italy';
-        const apiUrl = `http://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${apiKey}&units=metric`;
 
         try {
             const response = await axios.get(apiUrl);

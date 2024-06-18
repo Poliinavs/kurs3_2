@@ -28,7 +28,6 @@ app.post('/md/:name', async (req, res) => {
             method: 'PUT',
             url: `https://webdav.yandex.ru/${dirName}`,
             headers: {
-                Authorization: 'OAuth y0_AgAAAABBWOsBAAuelgAAAAEB9FKfAABXAIlIcbxCar-cyhfe8Yq5pxHYZA'
             }
         });
 
@@ -47,8 +46,7 @@ app.post('/md/:name', async (req, res) => {
 
 
 const client = createClient('https://webdav.yandex.ru', {
-    username: 'paulinaavsyukevitch',
-    password: 'wciepmdhjvolhmnm',
+
 });
 
 app.post('/md/:name', async (req, res) => {
